@@ -2,955 +2,315 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>บันทึกรายรับ-รายจ่าย</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>📊 Dividend Yield Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #f0f4f8;
-  --surface: #ffffff;
-  --surface2: #f7f8fb;
-  --surface3: #eef1f6;
-  --border: #e2e6ee;
-  --text: #1e293b;
-  --text2: #64748b;
-  --text3: #94a3b8;
-  --income: #10b981;
-  --income-bg: rgba(16,185,129,0.1);
-  --expense: #ef4444;
-  --expense-bg: rgba(239,68,68,0.08);
-  --accent: #6366f1;
-  --accent-bg: rgba(99,102,241,0.08);
-  --yellow: #f59e0b;
-  --pink: #ec4899;
-  --cyan: #06b6d4;
-  --orange: #f97316;
-  --purple: #8b5cf6;
-  --lime: #84cc16;
-  --rose: #f43f5e;
-  --teal: #14b8a6;
-  --radius: 16px;
-  --radius-sm: 10px;
-  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Kanit',sans-serif;background:#f0f2f7;color:#1e293b;min-height:100vh;-webkit-tap-highlight-color:transparent;}
+.mono{font-family:'JetBrains Mono',monospace;}
+
+.hdr{background:#fff;border-bottom:2px solid #e2e8f0;padding:12px 16px;position:sticky;top:0;z-index:50;}
+.hdr-in{max-width:900px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.hdr h1{font-size:16px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:6px;}
+.hdr .sub{font-size:10px;color:#94a3b8;margin-top:1px;}
+.hdr-btns{display:flex;gap:5px;flex-wrap:wrap;}
+
+.btn{border:none;padding:7px 12px;border-radius:7px;cursor:pointer;font-size:11px;font-family:'Kanit',sans-serif;font-weight:500;transition:all .15s;touch-action:manipulation;}
+.btn:active{transform:scale(0.96);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-l{background:#f1f5f9;color:#475569;}
+.btn-p{background:#2563eb;color:#fff;font-weight:600;}
+.btn-g{background:#16a34a;color:#fff;font-weight:600;}
+.btn-sm{padding:4px 8px;font-size:12px;border-radius:5px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:28px;min-height:28px;}
+.btn-sm.dng{background:#fef2f2;border-color:#fecaca;color:#dc2626;}
+
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
+.inp{background:#f8fafc;border:1px solid #e2e8f0;color:#1e293b;padding:7px 10px;border-radius:6px;font-size:13px;outline:none;font-family:'Kanit',sans-serif;width:100%;}
+.inp:focus{border-color:#93c5fd;}
+
+.wrap{max-width:900px;margin:0 auto;padding:12px 8px;}
+.tbl-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:680px;}
+thead tr{background:#f8fafc;border-bottom:2px solid #e2e8f0;}
+th{padding:8px 8px;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;}
+td{padding:8px 8px;white-space:nowrap;}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s;}
+.text-r{text-align:right;}
+.text-c{text-align:center;}
+
+.buy-row{background:#f0fdf4 !important;border-left:3px solid #16a34a;}
+.buy-row:hover{background:#dcfce7 !important;}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:16px;font-size:11px;font-weight:600;min-width:56px;text-align:center;}
+.badge-sub{font-size:9px;margin-top:1px;}
+
+.buy-signal{display:inline-flex;align-items:center;gap:3px;background:#16a34a;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.7;}}
+
+.target-hit{background:#dcfce7;border-radius:4px;padding:2px 6px;font-weight:700;color:#16a34a;}
+
+.legend{display:flex;gap:12px;justify-content:center;margin-top:12px;font-size:10px;color:#94a3b8;flex-wrap:wrap;}
+.ldot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:3px;}
+.footer{text-align:center;margin-top:8px;font-size:10px;color:#b0b8c8;padding-bottom:16px;line-height:1.7;}
+
+@media(max-width:700px){
+  .tbl-wrap{display:none;}
+  .mobile-cards{display:block!important;}
 }
-
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-  font-family: 'Sarabun', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  line-height: 1.5;
-}
-
-.app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-/* Header */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px 0;
-  margin-bottom: 8px;
-}
-
-.header h1 {
-  font-family: 'Kanit', sans-serif;
-  font-size: 28px;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), var(--pink));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.5px;
-}
-
-.header-sub {
-  font-size: 13px;
-  color: var(--text3);
-}
-
-/* Summary Cards */
-.summary-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.summary-card {
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 20px 24px;
-  border: 1px solid var(--border);
-  position: relative;
-  overflow: hidden;
-}
-
-.summary-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-}
-
-.summary-card.balance::before { background: linear-gradient(90deg, var(--accent), var(--cyan)); }
-.summary-card.income-card::before { background: var(--income); }
-.summary-card.expense-card::before { background: var(--expense); }
-
-.summary-label {
-  font-size: 13px;
-  color: var(--text2);
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.summary-amount {
-  font-family: 'Kanit', sans-serif;
-  font-size: 28px;
-  font-weight: 600;
-}
-
-.summary-card.balance .summary-amount { color: var(--accent); }
-.summary-card.income-card .summary-amount { color: var(--income); }
-.summary-card.expense-card .summary-amount { color: var(--expense); }
-
-/* Month Nav */
-.month-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.month-nav button {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.month-nav button:hover { background: var(--surface3); border-color: var(--accent); }
-
-.month-nav .current-month {
-  font-family: 'Kanit', sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  min-width: 180px;
-  text-align: center;
-}
-
-/* Main Layout */
-.main-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-/* Card */
-.card {
-  background: var(--surface);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  padding: 24px;
-}
-
-.card-title {
-  font-family: 'Kanit', sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 16px;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.card-title .icon {
-  width: 28px; height: 28px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-}
-
-/* Form */
-.form-grid {
-  display: grid;
-  gap: 14px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.form-group.full { grid-column: 1 / -1; }
-
-.form-group label {
-  font-size: 12px;
-  color: var(--text2);
-  font-weight: 600;
-}
-
-.form-group input, .form-group select {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  color: var(--text);
-  font-family: 'Sarabun', sans-serif;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.form-group input:focus, .form-group select:focus {
-  border-color: var(--accent);
-}
-
-.form-group select { cursor: pointer; }
-
-.type-toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.type-btn {
-  padding: 10px;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--border);
-  background: transparent;
-  color: var(--text2);
-  font-family: 'Kanit', sans-serif;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
-}
-
-.type-btn.active.income-type {
-  border-color: var(--income);
-  background: var(--income-bg);
-  color: var(--income);
-}
-
-.type-btn.active.expense-type {
-  border-color: var(--expense);
-  background: var(--expense-bg);
-  color: var(--expense);
-}
-
-.submit-btn {
-  background: linear-gradient(135deg, var(--accent), #6366f1);
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  color: white;
-  font-family: 'Kanit', sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 0.5px;
-}
-
-.submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
-/* Chart */
-.chart-container {
-  position: relative;
-  height: 220px;
-}
-
-.pie-container {
-  position: relative;
-  height: 260px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Transaction List */
-.tx-list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.tx-filter {
-  display: flex;
-  gap: 6px;
-}
-
-.tx-filter button {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text3);
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-family: 'Sarabun', sans-serif;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tx-filter button.active {
-  background: var(--accent-bg);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.tx-scroll {
-  max-height: 400px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--surface3) transparent;
-}
-
-.tx-scroll::-webkit-scrollbar { width: 4px; }
-.tx-scroll::-webkit-scrollbar-track { background: transparent; }
-.tx-scroll::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
-
-.tx-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  margin-bottom: 4px;
-  transition: background 0.15s;
-  gap: 12px;
-}
-
-.tx-item:hover { background: var(--surface2); }
-
-.tx-icon {
-  width: 36px; height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.tx-info { flex: 1; min-width: 0; }
-
-.tx-name {
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tx-meta {
-  font-size: 11px;
-  color: var(--text3);
-  display: flex;
-  gap: 8px;
-}
-
-.tx-amount {
-  font-family: 'Kanit', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.tx-amount.income { color: var(--income); }
-.tx-amount.expense { color: var(--expense); }
-
-.tx-delete {
-  background: none;
-  border: none;
-  color: var(--text3);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  opacity: 0;
-  transition: all 0.15s;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.tx-item:hover .tx-delete { opacity: 1; }
-.tx-delete:hover { background: var(--expense-bg); color: var(--expense); }
-
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text3);
-  font-size: 14px;
-}
-
-.empty-state .emoji { font-size: 32px; margin-bottom: 8px; }
-
-/* Legend */
-.pie-legend {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  padding: 4px 0;
-}
-
-.legend-dot {
-  width: 10px; height: 10px;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
-.legend-label { color: var(--text2); flex: 1; }
-.legend-value { color: var(--text); font-weight: 600; font-family: 'Kanit', sans-serif; font-size: 12px; }
-
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 14px;
-  z-index: 1000;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: var(--shadow);
-}
-
-.toast.show { transform: translateX(-50%) translateY(0); }
-
-/* Responsive */
-@media (max-width: 768px) {
-  .app { padding: 12px; }
-  .header h1 { font-size: 22px; }
-  .summary-row { grid-template-columns: 1fr; gap: 10px; }
-  .summary-card { padding: 16px; }
-  .summary-amount { font-size: 22px; }
-  .main-grid { grid-template-columns: 1fr; }
-  .form-row { grid-template-columns: 1fr; }
-  .pie-legend { grid-template-columns: 1fr; }
-}
-
-/* Delete confirm */
-.confirm-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  backdrop-filter: blur(4px);
-  animation: fadeIn 0.15s;
-}
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.confirm-box {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 28px;
-  max-width: 340px;
-  width: 90%;
-  text-align: center;
-  box-shadow: var(--shadow);
-}
-
-.confirm-box p {
-  margin-bottom: 20px;
-  font-size: 15px;
-}
-
-.confirm-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.confirm-actions button {
-  padding: 10px 24px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  font-family: 'Kanit', sans-serif;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-cancel {
-  background: var(--surface2);
-  color: var(--text);
-}
-
-.btn-confirm-delete {
-  background: var(--expense);
-  color: white;
-  border-color: var(--expense) !important;
-}
+.mobile-cards{display:none;}
+.m-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
+.m-card.buy{border-left:4px solid #16a34a;background:#f0fdf4;}
+.m-card .m-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.m-card .m-sym{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:#0f172a;}
+.m-card .m-price{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:18px;}
+.m-card .m-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;}
+.m-card .m-cell{background:#f8fafc;border-radius:6px;padding:6px;text-align:center;}
+.m-card .m-cell.hit{background:#dcfce7;}
+.m-card .m-cell .m-label{font-size:9px;color:#94a3b8;}
+.m-card .m-cell .m-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}
+.m-card .m-divs{font-size:10px;color:#94a3b8;margin-top:6px;}
+.m-card .m-acts{display:flex;gap:4px;margin-top:8px;justify-content:flex-end;}
 </style>
 </head>
 <body>
 
-<div class="app" id="app">
-  <!-- Header -->
-  <div class="header">
+<div class="hdr">
+  <div class="hdr-in">
     <div>
-      <h1>💰 บันทึกรายรับ-รายจ่าย</h1>
-      <div class="header-sub">จัดการเงินง่ายๆ ครบจบในที่เดียว</div>
+      <h1>📊 Dividend Calculator</h1>
+      <div class="sub" id="lastUp">ยังไม่ได้ดึงราคา • Gemini API</div>
     </div>
-  </div>
-
-  <!-- Month Navigation -->
-  <div class="month-nav">
-    <button onclick="changeMonth(-1)">◀</button>
-    <div class="current-month" id="currentMonth"></div>
-    <button onclick="changeMonth(1)">▶</button>
-  </div>
-
-  <!-- Summary -->
-  <div class="summary-row">
-    <div class="summary-card balance">
-      <div class="summary-label">💎 ยอดคงเหลือ</div>
-      <div class="summary-amount" id="balanceAmount">฿0</div>
-    </div>
-    <div class="summary-card income-card">
-      <div class="summary-label">📈 รายรับเดือนนี้</div>
-      <div class="summary-amount" id="incomeAmount">฿0</div>
-    </div>
-    <div class="summary-card expense-card">
-      <div class="summary-label">📉 รายจ่ายเดือนนี้</div>
-      <div class="summary-amount" id="expenseAmount">฿0</div>
-    </div>
-  </div>
-
-  <!-- Main Content -->
-  <div class="main-grid">
-    <!-- Left: Form + Bar Chart -->
-    <div style="display:flex;flex-direction:column;gap:20px;">
-      <!-- Add Transaction Form -->
-      <div class="card">
-        <div class="card-title">
-          <div class="icon" style="background:var(--accent-bg);color:var(--accent);">✏️</div>
-          เพิ่มรายการ
-        </div>
-        <div class="form-grid">
-          <div class="form-group full">
-            <label>ประเภท</label>
-            <div class="type-toggle">
-              <button class="type-btn expense-type active" onclick="setType('expense')">💸 รายจ่าย</button>
-              <button class="type-btn income-type" onclick="setType('income')">💵 รายรับ</button>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>วันที่</label>
-              <input type="date" id="txDate">
-            </div>
-            <div class="form-group">
-              <label>จำนวนเงิน (฿)</label>
-              <input type="number" id="txAmount" placeholder="0.00" min="0" step="0.01">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>หมวดหมู่</label>
-              <select id="txCategory"></select>
-            </div>
-            <div class="form-group">
-              <label>รายการ</label>
-              <input type="text" id="txName" placeholder="รายละเอียด...">
-            </div>
-          </div>
-          <button class="submit-btn" onclick="addTransaction()">+ เพิ่มรายการ</button>
-        </div>
-      </div>
-
-      <!-- Bar Chart -->
-      <div class="card">
-        <div class="card-title">
-          <div class="icon" style="background:rgba(34,211,238,0.12);color:var(--cyan);">📊</div>
-          รายรับ-รายจ่าย รายเดือน
-        </div>
-        <div class="chart-container">
-          <canvas id="barChart"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right: Pie Chart + List -->
-    <div style="display:flex;flex-direction:column;gap:20px;">
-      <!-- Pie Chart -->
-      <div class="card">
-        <div class="card-title">
-          <div class="icon" style="background:rgba(244,114,182,0.12);color:var(--pink);">🍩</div>
-          สัดส่วนรายจ่าย
-        </div>
-        <div class="pie-container">
-          <canvas id="pieChart"></canvas>
-        </div>
-        <div class="pie-legend" id="pieLegend"></div>
-      </div>
-
-      <!-- Transaction List -->
-      <div class="card">
-        <div class="tx-list-header">
-          <div class="card-title" style="margin-bottom:0;">
-            <div class="icon" style="background:rgba(251,191,36,0.12);color:var(--yellow);">📋</div>
-            รายการ
-          </div>
-          <div class="tx-filter">
-            <button class="active" onclick="setFilter('all',this)">ทั้งหมด</button>
-            <button onclick="setFilter('income',this)">รายรับ</button>
-            <button onclick="setFilter('expense',this)">รายจ่าย</button>
-          </div>
-        </div>
-        <div class="tx-scroll" id="txList"></div>
-      </div>
+    <div class="hdr-btns">
+      <button class="btn btn-l" onclick="tog('keyP')">🔑</button>
+      <button class="btn btn-l" onclick="tog('addP')">＋ เพิ่ม</button>
+      <button class="btn btn-p" id="fetchBtn" onclick="fetchAll()">🔄 ดึงราคา</button>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
-
-<!-- Confirm Dialog -->
-<div class="confirm-overlay" id="confirmOverlay" style="display:none;">
-  <div class="confirm-box">
-    <p id="confirmMsg">ลบรายการนี้?</p>
-    <div class="confirm-actions">
-      <button class="btn-cancel" onclick="closeConfirm()">ยกเลิก</button>
-      <button class="btn-confirm-delete" id="confirmBtn">ลบ</button>
+<div class="wrap">
+  <div class="card" id="keyP" style="display:none;">
+    <div style="font-size:12px;font-weight:600;margin-bottom:6px;">🔑 Gemini API Key</div>
+    <div style="display:flex;gap:6px;">
+      <input type="password" id="keyInp" class="inp" placeholder="AIzaSy..." style="font-family:'JetBrains Mono',monospace;font-size:12px;">
+      <button class="btn btn-p" onclick="saveKey()" style="white-space:nowrap;">บันทึก</button>
     </div>
+    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">
+      สร้าง Key ฟรี: <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#2563eb;">aistudio.google.com/apikey</a>
+    </div>
+  </div>
+
+  <div class="card" id="addP" style="display:none;">
+    <div style="font-size:12px;font-weight:600;margin-bottom:6px;">เพิ่มหุ้นใหม่</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:5px;margin-bottom:6px;">
+      <div><div style="font-size:9px;color:#94a3b8;">ชื่อหุ้น</div><input id="aS" class="inp" placeholder="BDMS" style="font-family:'JetBrains Mono',monospace;font-size:12px;"></div>
+      <div><div style="font-size:9px;color:#94a3b8;">2025</div><input id="aD0" class="inp" placeholder="0.00" style="font-size:12px;"></div>
+      <div><div style="font-size:9px;color:#94a3b8;">2024</div><input id="aD1" class="inp" placeholder="0.00" style="font-size:12px;"></div>
+      <div><div style="font-size:9px;color:#94a3b8;">2023</div><input id="aD2" class="inp" placeholder="0.00" style="font-size:12px;"></div>
+      <div><div style="font-size:9px;color:#94a3b8;">2022</div><input id="aD3" class="inp" placeholder="0.00" style="font-size:12px;"></div>
+    </div>
+    <button class="btn btn-g" onclick="addStk()" style="width:100%;">✓ เพิ่ม</button>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>หุ้น</th>
+          <th class="text-r">ราคา</th>
+          <th class="text-r">ปันผลเฉลี่ย</th>
+          <th class="text-c">Yield</th>
+          <th class="text-r">เป้า 5%</th>
+          <th class="text-r">เป้า 7%</th>
+          <th class="text-r">เป้า 10%</th>
+          <th class="text-c">สัญญาณ</th>
+          <th class="text-c" style="width:70px;"></th>
+        </tr>
+      </thead>
+      <tbody id="tBody"></tbody>
+    </table>
+  </div>
+
+  <div class="mobile-cards" id="mCards"></div>
+
+  <div class="legend">
+    <span><span class="ldot" style="background:#16a34a;"></span>≥7% ดีมาก</span>
+    <span><span class="ldot" style="background:#65a30d;"></span>≥5% ดี</span>
+    <span><span class="ldot" style="background:#ca8a04;"></span>≥3% พอใช้</span>
+    <span><span class="ldot" style="background:#dc2626;"></span>&lt;3% ต่ำ</span>
+  </div>
+  <div class="footer">
+    ✅ <b>ซื้อได้</b> = Yield ≥ 7% (ราคาต่ำกว่าเป้า 7%)<br>
+    ราคาเป้า = ปันผลเฉลี่ย ÷ % yield
   </div>
 </div>
 
 <script>
-// ===== CONFIG =====
-const CATEGORIES = {
-  expense: [
-    { id: 'food', name: '🍜 อาหาร', color: '#fb923c' },
-    { id: 'transport', name: '🚗 เดินทาง', color: '#22d3ee' },
-    { id: 'shopping', name: '🛍️ ช้อปปิ้ง', color: '#f472b6' },
-    { id: 'housing', name: '🏠 ที่พัก/ค่าเช่า', color: '#818cf8' },
-    { id: 'utilities', name: '💡 ค่าน้ำ/ไฟ/เน็ต', color: '#fbbf24' },
-    { id: 'health', name: '🏥 สุขภาพ', color: '#34d399' },
-    { id: 'entertainment', name: '🎮 บันเทิง', color: '#a78bfa' },
-    { id: 'education', name: '📚 การศึกษา', color: '#60a5fa' },
-    { id: 'personal', name: '💄 ของใช้ส่วนตัว', color: '#fb7185' },
-    { id: 'other_exp', name: '📦 อื่นๆ', color: '#9ba0b4' },
-  ],
-  income: [
-    { id: 'salary', name: '💼 เงินเดือน', color: '#34d399' },
-    { id: 'freelance', name: '💻 ฟรีแลนซ์', color: '#22d3ee' },
-    { id: 'invest', name: '📈 การลงทุน', color: '#fbbf24' },
-    { id: 'bonus', name: '🎁 โบนัส', color: '#f472b6' },
-    { id: 'other_inc', name: '💰 อื่นๆ', color: '#a78bfa' },
-  ]
-};
+let apiKey=localStorage.getItem('gk')||'';
+let S=JSON.parse(localStorage.getItem('sd')||'null')||[
+  {s:"BDMS",d:[0.75,0.7,0.65,0.5],p:null},
+  {s:"BH",d:[5,5.15,3.7,3.2],p:null},
+  {s:"BKIH",d:[17,16.75,16.25,15.5],p:null},
+  {s:"TIPH",d:[2,1.6,1.25,1.8],p:null},
+  {s:"BAY",d:[0.85,0.85,0.85,0.85],p:null},
+  {s:"TTB",d:[0.126,0.12,0.103,0.058],p:null},
+  {s:"BBL",d:[8.5,7,5,3.5],p:null},
+];
+document.getElementById('keyInp').value=apiKey;
 
-const THAI_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-const SHORT_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-
-// ===== STATE =====
-let transactions = JSON.parse(localStorage.getItem('txns') || '[]');
-let currentType = 'expense';
-let currentFilter = 'all';
-let viewDate = new Date();
-let barChart, pieChart;
-
-// ===== INIT =====
-function init() {
-  document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
-  updateCategorySelect();
-  updateAll();
+function fm(n,d=2){if(n==null||isNaN(n))return'-';return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function av(a){return a.reduce((x,y)=>x+y,0)/a.length;}
+function yp(p,a){return(p&&a)?(a/p)*100:null;}
+function tp(a,y){return(a&&y)?a/y:null;}
+function ys(y){
+  if(y==null)return{c:'#999',bg:'#f3f4f6',t:'-'};
+  if(y>=7)return{c:'#16a34a',bg:'#dcfce7',t:'ดีมาก'};
+  if(y>=5)return{c:'#65a30d',bg:'#ecfccb',t:'ดี'};
+  if(y>=3)return{c:'#ca8a04',bg:'#fef9c3',t:'พอใช้'};
+  return{c:'#dc2626',bg:'#fee2e2',t:'ต่ำ'};
 }
+function sv(){localStorage.setItem('sd',JSON.stringify(S));}
+function tog(id){const e=document.getElementById(id);e.style.display=e.style.display==='none'?'block':'none';}
 
-// ===== HELPERS =====
-function save() { localStorage.setItem('txns', JSON.stringify(transactions)); }
-function fmt(n) { return '฿' + Number(n).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+function render(){
+  const tb=document.getElementById('tBody');
+  tb.innerHTML='';
+  const mc=document.getElementById('mCards');
+  mc.innerHTML='';
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
-}
+  S.forEach((s,i)=>{
+    const a=av(s.d);
+    const y=yp(s.p,a);
+    const st=ys(y);
+    const t5=tp(a,0.05),t7=tp(a,0.07),t10=tp(a,0.10);
+    const canBuy=y!=null&&y>=7;
+    const hit5=s.p&&t5&&s.p<=t5;
+    const hit7=s.p&&t7&&s.p<=t7;
+    const hit10=s.p&&t10&&s.p<=t10;
 
-function getCatInfo(type, catId) {
-  const list = CATEGORIES[type] || [];
-  return list.find(c => c.id === catId) || { name: catId, color: '#9ba0b4' };
-}
+    // Desktop row
+    const tr=document.createElement('tr');
+    if(canBuy)tr.className='buy-row';
 
-// ===== TYPE & CATEGORY =====
-function setType(type) {
-  currentType = type;
-  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`.type-btn.${type}-type`).classList.add('active');
-  updateCategorySelect();
-}
+    let prH;
+    if(s.loading)prH='<span style="color:#94a3b8;font-size:11px;">⏳</span>';
+    else if(s.p)prH=`<span class="mono" style="font-weight:600;font-size:14px;">${fm(s.p)}</span>`;
+    else prH=`<input class="inp" placeholder="ราคา" style="width:65px;text-align:right;font-size:12px;font-family:'JetBrains Mono',monospace;padding:4px 6px;" onkeydown="if(event.key==='Enter')sp(${i},this.value)" onblur="sp(${i},this.value)">`;
+    if(s.error)prH+=`<div style="font-size:9px;color:#dc2626;">${s.error}</div>`;
 
-function updateCategorySelect() {
-  const sel = document.getElementById('txCategory');
-  sel.innerHTML = CATEGORIES[currentType].map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-}
+    const signal=canBuy?'<span class="buy-signal">✅ ซื้อได้</span>':(y!=null&&y>=5?'<span style="font-size:10px;color:#ca8a04;">👀 จับตา</span>':'<span style="font-size:10px;color:#94a3b8;">—</span>');
 
-// ===== ADD TRANSACTION =====
-function addTransaction() {
-  const date = document.getElementById('txDate').value;
-  const amount = parseFloat(document.getElementById('txAmount').value);
-  const category = document.getElementById('txCategory').value;
-  const name = document.getElementById('txName').value.trim();
+    tr.innerHTML=`
+      <td><div class="mono" style="font-weight:700;font-size:13px;color:#0f172a;">${s.s}</div><div style="font-size:9px;color:#94a3b8;margin-top:1px;">${s.d.map(x=>fm(x)).join(' | ')}</div></td>
+      <td class="text-r">${prH}</td>
+      <td class="text-r mono" style="font-weight:500;font-size:13px;">${fm(a)}</td>
+      <td class="text-c"><span class="badge mono" style="background:${st.bg};color:${st.c};">${y!=null?fm(y)+'%':'-'}</span><div class="badge-sub" style="color:${st.c};">${st.t!=='-'?st.t:''}</div></td>
+      <td class="text-r mono" style="font-size:12px;">${hit5?`<span class="target-hit">${fm(t5)} ✓</span>`:`<span style="color:#64748b;">${fm(t5)}</span>`}</td>
+      <td class="text-r mono" style="font-size:12px;">${hit7?`<span class="target-hit">${fm(t7)} ✓</span>`:`<span style="color:#64748b;">${fm(t7)}</span>`}</td>
+      <td class="text-r mono" style="font-size:12px;">${hit10?`<span class="target-hit">${fm(t10)} ✓</span>`:`<span style="color:#64748b;">${fm(t10)}</span>`}</td>
+      <td class="text-c">${signal}</td>
+      <td class="text-c"><button class="btn-sm" onclick="f1(${i})" ${s.loading?'disabled':''}>🔄</button> <button class="btn-sm dng" onclick="rm(${i})">✕</button></td>
+    `;
+    tb.appendChild(tr);
 
-  if (!date || !amount || amount <= 0) {
-    showToast('⚠️ กรุณากรอกข้อมูลให้ครบ');
-    return;
-  }
+    // Mobile card
+    const card=document.createElement('div');
+    card.className='m-card'+(canBuy?' buy':'');
+    let mPrH;
+    if(s.loading)mPrH='<span style="color:#94a3b8;">⏳</span>';
+    else if(s.p)mPrH=`<span class="m-price">฿${fm(s.p)}</span>`;
+    else mPrH=`<input class="inp" placeholder="ราคา" style="width:80px;text-align:right;font-size:14px;font-family:'JetBrains Mono',monospace;padding:5px 8px;" onkeydown="if(event.key==='Enter')sp(${i},this.value)" onblur="sp(${i},this.value)">`;
 
-  transactions.push({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    date, amount, category, name: name || getCatInfo(currentType, category).name.replace(/^.+\s/, ''),
-    type: currentType
-  });
-
-  save();
-  showToast('✅ เพิ่มรายการสำเร็จ');
-  document.getElementById('txAmount').value = '';
-  document.getElementById('txName').value = '';
-  updateAll();
-}
-
-// ===== DELETE =====
-function confirmDelete(id) {
-  const overlay = document.getElementById('confirmOverlay');
-  overlay.style.display = 'flex';
-  document.getElementById('confirmBtn').onclick = () => {
-    transactions = transactions.filter(t => t.id !== id);
-    save();
-    closeConfirm();
-    showToast('🗑️ ลบรายการแล้ว');
-    updateAll();
-  };
-}
-
-function closeConfirm() { document.getElementById('confirmOverlay').style.display = 'none'; }
-
-// ===== MONTH NAV =====
-function changeMonth(delta) {
-  viewDate.setMonth(viewDate.getMonth() + delta);
-  updateAll();
-}
-
-// ===== FILTER =====
-function setFilter(f, btn) {
-  currentFilter = f;
-  document.querySelectorAll('.tx-filter button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderList();
-}
-
-// ===== GET MONTHLY DATA =====
-function getMonthTxns(y, m) {
-  return transactions.filter(t => {
-    const d = new Date(t.date);
-    return d.getFullYear() === y && d.getMonth() === m;
+    card.innerHTML=`
+      <div class="m-top"><div><span class="m-sym">${s.s}</span>${canBuy?'<span class="buy-signal" style="margin-left:6px;">✅ ซื้อได้</span>':''}${!canBuy&&y!=null&&y>=5?'<span style="margin-left:6px;font-size:10px;color:#ca8a04;">👀 จับตา</span>':''}</div><div>${mPrH}</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><span class="badge mono" style="background:${st.bg};color:${st.c};font-size:13px;padding:3px 10px;">Yield ${y!=null?fm(y)+'%':'-'}</span><span style="font-size:10px;color:${st.c};margin-left:4px;">${st.t!=='-'?st.t:''}</span></div>
+        <div style="font-size:11px;color:#64748b;">เฉลี่ย <span class="mono" style="font-weight:600;">${fm(a)}</span></div>
+      </div>
+      <div class="m-grid">
+        <div class="m-cell${hit5?' hit':''}"><div class="m-label">เป้า 5%</div><div class="m-val" style="color:${hit5?'#16a34a':'#475569'};">${fm(t5)}${hit5?' ✓':''}</div></div>
+        <div class="m-cell${hit7?' hit':''}"><div class="m-label">เป้า 7%</div><div class="m-val" style="color:${hit7?'#16a34a':'#475569'};">${fm(t7)}${hit7?' ✓':''}</div></div>
+        <div class="m-cell${hit10?' hit':''}"><div class="m-label">เป้า 10%</div><div class="m-val" style="color:${hit10?'#16a34a':'#475569'};">${fm(t10)}${hit10?' ✓':''}</div></div>
+      </div>
+      <div class="m-divs">ปันผล: ${s.d.map((x,j)=>`'${25-j} ${fm(x)}`).join(' | ')}</div>
+      <div class="m-acts"><button class="btn-sm" onclick="f1(${i})" ${s.loading?'disabled':''}>🔄</button> <button class="btn-sm dng" onclick="rm(${i})">✕</button></div>
+    `;
+    mc.appendChild(card);
   });
 }
 
-// ===== UPDATE ALL =====
-function updateAll() {
-  const y = viewDate.getFullYear();
-  const m = viewDate.getMonth();
-  document.getElementById('currentMonth').textContent = `${THAI_MONTHS[m]} ${y + 543}`;
-
-  const monthTxns = getMonthTxns(y, m);
-  const totalIncome = monthTxns.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const totalExpense = monthTxns.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-  const allIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const allExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-
-  document.getElementById('balanceAmount').textContent = fmt(allIncome - allExpense);
-  document.getElementById('incomeAmount').textContent = fmt(totalIncome);
-  document.getElementById('expenseAmount').textContent = fmt(totalExpense);
-
-  renderList();
-  renderBarChart(y);
-  renderPieChart(y, m);
+function saveKey(){apiKey=document.getElementById('keyInp').value.trim();localStorage.setItem('gk',apiKey);tog('keyP');}
+function sp(i,v){const p=parseFloat(v);if(!isNaN(p)&&p>0){S[i].p=p;sv();render();}}
+function rm(i){S.splice(i,1);sv();render();}
+function addStk(){
+  const sym=document.getElementById('aS').value.trim().toUpperCase();
+  if(!sym)return;
+  const d=[0,1,2,3].map(j=>parseFloat(document.getElementById('aD'+j).value)||0);
+  S.push({s:sym,d:d,p:null});
+  document.getElementById('aS').value='';
+  [0,1,2,3].forEach(j=>document.getElementById('aD'+j).value='');
+  tog('addP');sv();render();
 }
 
-// ===== RENDER LIST =====
-function renderList() {
-  const y = viewDate.getFullYear();
-  const m = viewDate.getMonth();
-  let txns = getMonthTxns(y, m);
-  if (currentFilter !== 'all') txns = txns.filter(t => t.type === currentFilter);
-  txns.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  const el = document.getElementById('txList');
-  if (!txns.length) {
-    el.innerHTML = `<div class="empty-state"><div class="emoji">📭</div>ยังไม่มีรายการในเดือนนี้</div>`;
-    return;
-  }
-
-  el.innerHTML = txns.map(t => {
-    const cat = getCatInfo(t.type, t.category);
-    const d = new Date(t.date);
-    const dateStr = `${d.getDate()} ${SHORT_MONTHS[d.getMonth()]}`;
-    return `
-      <div class="tx-item">
-        <div class="tx-icon" style="background:${cat.color}18;color:${cat.color};">${cat.name.split(' ')[0]}</div>
-        <div class="tx-info">
-          <div class="tx-name">${t.name}</div>
-          <div class="tx-meta"><span>${dateStr}</span><span>${cat.name.split(' ').slice(1).join(' ')}</span></div>
-        </div>
-        <div class="tx-amount ${t.type}">${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}</div>
-        <button class="tx-delete" onclick="confirmDelete('${t.id}')" title="ลบ">✕</button>
-      </div>`;
-  }).join('');
-}
-
-// ===== BAR CHART =====
-function renderBarChart(year) {
-  const ctx = document.getElementById('barChart').getContext('2d');
-  const incomeData = [], expenseData = [];
-
-  for (let m = 0; m < 12; m++) {
-    const txns = getMonthTxns(year, m);
-    incomeData.push(txns.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0));
-    expenseData.push(txns.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0));
-  }
-
-  if (barChart) barChart.destroy();
-  barChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: SHORT_MONTHS,
-      datasets: [
-        { label: 'รายรับ', data: incomeData, backgroundColor: 'rgba(52,211,153,0.7)', borderRadius: 6, barPercentage: 0.6 },
-        { label: 'รายจ่าย', data: expenseData, backgroundColor: 'rgba(248,113,113,0.7)', borderRadius: 6, barPercentage: 0.6 }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: '#64748b', font: { family: 'Sarabun', size: 12 }, boxWidth: 12, padding: 16 } },
-        tooltip: {
-          backgroundColor: '#1e293b',
-          titleColor: '#fff',
-          bodyColor: '#fff',
-          titleFont: { family: 'Sarabun' },
-          bodyFont: { family: 'Kanit' },
-          callbacks: { label: c => `${c.dataset.label}: ${fmt(c.raw)}` }
-        }
-      },
-      scales: {
-        x: { ticks: { color: '#94a3b8', font: { family: 'Sarabun', size: 11 } }, grid: { display: false } },
-        y: { ticks: { color: '#94a3b8', font: { family: 'Sarabun', size: 11 }, callback: v => v >= 1000 ? (v/1000)+'k' : v }, grid: { color: 'rgba(226,230,238,0.7)' } }
-      }
+async function gemini(sym){
+  if(!apiKey)return null;
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{parts:[{text:`What is the latest stock price of "${sym}" on Thailand Stock Exchange (SET) in Thai Baht? Reply ONLY with JSON: {"price":NUMBER} — nothing else.`}]}],
+        tools:[{google_search:{}}],
+        generationConfig:{temperature:0},
+      }),
+    });
+    const data=await r.json();
+    if(data.error){console.error('Gemini:',data.error.message);return null;}
+    const parts=data?.candidates?.[0]?.content?.parts||[];
+    const txt=parts.find(p=>p.text);
+    if(txt){
+      const c=txt.text.replace(/```json|```/g,'').trim();
+      const m=c.match(/\{\s*"price"\s*:\s*([\d.]+)\s*\}/);
+      if(m)return parseFloat(m[1]);
+      try{return JSON.parse(c).price;}catch{}
     }
-  });
+    return null;
+  }catch(e){console.error(sym,e);return null;}
 }
 
-// ===== PIE CHART =====
-function renderPieChart(year, month) {
-  const ctx = document.getElementById('pieChart').getContext('2d');
-  const txns = getMonthTxns(year, month).filter(t => t.type === 'expense');
+async function f1(i){
+  if(!apiKey){alert('กรุณาใส่ Gemini API Key ก่อน');tog('keyP');return;}
+  S[i].loading=true;S[i].error=null;render();
+  const p=await gemini(S[i].s);
+  S[i].loading=false;
+  if(p){S[i].p=p;S[i].error=null;}else{S[i].error='ดึงไม่ได้';}
+  sv();render();upTime();
+}
 
-  const catTotals = {};
-  txns.forEach(t => { catTotals[t.category] = (catTotals[t.category] || 0) + t.amount; });
-
-  const entries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
-  const total = entries.reduce((s, e) => s + e[1], 0);
-
-  const legendEl = document.getElementById('pieLegend');
-
-  if (!entries.length) {
-    if (pieChart) pieChart.destroy();
-    pieChart = null;
-    legendEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:20px;font-size:13px;">ไม่มีรายจ่ายในเดือนนี้</div>`;
-    return;
+async function fetchAll(){
+  if(!apiKey){alert('กรุณาใส่ Gemini API Key ก่อน');tog('keyP');return;}
+  const b=document.getElementById('fetchBtn');
+  b.disabled=true;b.textContent='⏳ กำลังดึง...';
+  for(let i=0;i<S.length;i++){
+    S[i].loading=true;S[i].error=null;render();
+    const p=await gemini(S[i].s);
+    S[i].loading=false;
+    if(p){S[i].p=p;S[i].error=null;}else{S[i].error='ดึงไม่ได้';}
+    render();
+    if(i<S.length-1)await new Promise(r=>setTimeout(r,1200));
   }
-
-  const labels = entries.map(e => getCatInfo('expense', e[0]).name);
-  const data = entries.map(e => e[1]);
-  const colors = entries.map(e => getCatInfo('expense', e[0]).color);
-
-  if (pieChart) pieChart.destroy();
-  pieChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{ data, backgroundColor: colors, borderWidth: 3, borderColor: '#ffffff', hoverOffset: 8 }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '62%',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1e293b',
-          titleColor: '#fff',
-          bodyColor: '#fff',
-          titleFont: { family: 'Sarabun' },
-          bodyFont: { family: 'Kanit' },
-          callbacks: { label: c => `${fmt(c.raw)} (${((c.raw/total)*100).toFixed(1)}%)` }
-        }
-      }
-    }
-  });
-
-  legendEl.innerHTML = entries.map(([catId, val]) => {
-    const cat = getCatInfo('expense', catId);
-    const pct = ((val / total) * 100).toFixed(1);
-    return `<div class="legend-item">
-      <div class="legend-dot" style="background:${cat.color}"></div>
-      <span class="legend-label">${cat.name}</span>
-      <span class="legend-value">${pct}%</span>
-    </div>`;
-  }).join('');
+  sv();b.disabled=false;b.textContent='🔄 ดึงราคา';upTime();
 }
 
-// ===== START =====
-init();
+function upTime(){
+  const n=new Date();
+  document.getElementById('lastUp').textContent=`อัปเดต: ${n.toLocaleString('th-TH')} • Gemini API`;
+  localStorage.setItem('lu',n.toISOString());
+}
+
+const lu=localStorage.getItem('lu');
+if(lu)document.getElementById('lastUp').textContent=`อัปเดต: ${new Date(lu).toLocaleString('th-TH')} • Gemini API`;
+render();
 </script>
 </body>
 </html>
