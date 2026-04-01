@@ -22,12 +22,20 @@ body{font-family:'Kanit',sans-serif;background:#f0f2f7;color:#1e293b;min-height:
 .btn-l{background:#f1f5f9;color:#475569;}
 .btn-p{background:#2563eb;color:#fff;font-weight:600;}
 .btn-g{background:#16a34a;color:#fff;font-weight:600;}
+.btn-o{background:#f59e0b;color:#fff;font-weight:600;}
 .btn-sm{padding:4px 8px;font-size:12px;border-radius:5px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:28px;min-height:28px;}
 .btn-sm.dng{background:#fef2f2;border-color:#fecaca;color:#dc2626;}
 
 .card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
 .inp{background:#f8fafc;border:1px solid #e2e8f0;color:#1e293b;padding:7px 10px;border-radius:6px;font-size:13px;outline:none;font-family:'Kanit',sans-serif;width:100%;}
 .inp:focus{border-color:#93c5fd;}
+
+/* Log panel */
+.log-panel{background:#1e293b;color:#94a3b8;border-radius:10px;padding:12px;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:11px;max-height:200px;overflow-y:auto;display:none;}
+.log-panel.show{display:block;}
+.log-ok{color:#4ade80;}
+.log-err{color:#f87171;}
+.log-info{color:#60a5fa;}
 
 .wrap{max-width:900px;margin:0 auto;padding:12px 8px;}
 .tbl-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow-x:auto;-webkit-overflow-scrolling:touch;}
@@ -84,12 +92,14 @@ tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s;}
     <div class="hdr-btns">
       <button class="btn btn-l" onclick="tog('keyP')">🔑</button>
       <button class="btn btn-l" onclick="tog('addP')">＋ เพิ่ม</button>
+      <button class="btn btn-o" onclick="testKey()">🧪 ทดสอบ</button>
       <button class="btn btn-p" id="fetchBtn" onclick="fetchAll()">🔄 ดึงราคา</button>
     </div>
   </div>
 </div>
 
 <div class="wrap">
+  <!-- API Key -->
   <div class="card" id="keyP" style="display:none;">
     <div style="font-size:12px;font-weight:600;margin-bottom:6px;">🔑 Gemini API Key</div>
     <div style="display:flex;gap:6px;">
@@ -97,10 +107,12 @@ tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s;}
       <button class="btn btn-p" onclick="saveKey()" style="white-space:nowrap;">บันทึก</button>
     </div>
     <div style="font-size:10px;color:#94a3b8;margin-top:4px;">
-      สร้าง Key ฟรี: <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#2563eb;">aistudio.google.com/apikey</a>
+      สร้าง Key ได้ที่ <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#2563eb;">aistudio.google.com/apikey</a>
     </div>
+    <div id="keyStatus" style="margin-top:6px;font-size:11px;"></div>
   </div>
 
+  <!-- Add Stock -->
   <div class="card" id="addP" style="display:none;">
     <div style="font-size:12px;font-weight:600;margin-bottom:6px;">เพิ่มหุ้นใหม่</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:5px;margin-bottom:6px;">
@@ -113,6 +125,10 @@ tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s;}
     <button class="btn btn-g" onclick="addStk()" style="width:100%;">✓ เพิ่ม</button>
   </div>
 
+  <!-- Debug Log -->
+  <div class="log-panel" id="logP"></div>
+
+  <!-- Table -->
   <div class="tbl-wrap">
     <table>
       <thead>
@@ -132,6 +148,7 @@ tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s;}
     </table>
   </div>
 
+  <!-- Mobile Cards -->
   <div class="mobile-cards" id="mCards"></div>
 
   <div class="legend">
@@ -173,6 +190,202 @@ function ys(y){
 function sv(){localStorage.setItem('sd',JSON.stringify(S));}
 function tog(id){const e=document.getElementById(id);e.style.display=e.style.display==='none'?'block':'none';}
 
+// === LOG ===
+function log(msg, type='info'){
+  const p=document.getElementById('logP');
+  p.classList.add('show');
+  const cls=type==='ok'?'log-ok':type==='err'?'log-err':'log-info';
+  const time=new Date().toLocaleTimeString('th-TH');
+  p.innerHTML+=`<div class="${cls}">[${time}] ${msg}</div>`;
+  p.scrollTop=p.scrollHeight;
+}
+
+// === TEST KEY ===
+async function testKey(){
+  if(!apiKey){alert('กรุณาใส่ API Key ก่อน');tog('keyP');return;}
+  const ks=document.getElementById('keyStatus');
+  ks.innerHTML='<span style="color:#f59e0b;">⏳ กำลังทดสอบ...</span>';
+  log('ทดสอบ API Key...','info');
+
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{parts:[{text:'Reply with exactly: {"status":"ok"}'}]}],
+        generationConfig:{temperature:0},
+      }),
+    });
+
+    const data=await r.json();
+    log('Response: '+JSON.stringify(data).substring(0,300),'info');
+
+    if(data.error){
+      ks.innerHTML=`<span style="color:#dc2626;">❌ Error: ${data.error.message}</span>`;
+      log('API Key Error: '+data.error.message,'err');
+      return;
+    }
+
+    const parts=data?.candidates?.[0]?.content?.parts||[];
+    if(parts.length>0){
+      ks.innerHTML='<span style="color:#16a34a;">✅ API Key ใช้งานได้!</span>';
+      log('API Key ใช้งานได้!','ok');
+    } else {
+      ks.innerHTML='<span style="color:#f59e0b;">⚠️ ได้คำตอบแต่ไม่มีเนื้อหา</span>';
+      log('Response ไม่มี parts','err');
+    }
+  }catch(e){
+    ks.innerHTML=`<span style="color:#dc2626;">❌ Network error: ${e.message}</span>`;
+    log('Network error: '+e.message,'err');
+  }
+}
+
+// === GEMINI FETCH ===
+async function gemini(sym){
+  if(!apiKey)return null;
+  log(`ดึงราคา ${sym}...`,'info');
+
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{parts:[{text:
+          `Search for the current stock price of "${sym}" on the Stock Exchange of Thailand (SET).
+Give me ONLY a JSON response in this exact format, nothing else:
+{"price": 123.50}
+Replace 123.50 with the actual current price in Thai Baht. Do not include any other text.`
+        }]}],
+        tools:[{google_search:{}}],
+        generationConfig:{temperature:0,maxOutputTokens:100},
+      }),
+    });
+
+    const data=await r.json();
+
+    // Check for API errors
+    if(data.error){
+      log(`❌ ${sym}: API Error - ${data.error.message}`,'err');
+      return {error: data.error.message};
+    }
+
+    // Log raw response
+    const raw=JSON.stringify(data).substring(0,500);
+    log(`${sym} raw: ${raw}`,'info');
+
+    const parts=data?.candidates?.[0]?.content?.parts||[];
+    
+    // Try to find price in text parts
+    for(const part of parts){
+      if(part.text){
+        const clean=part.text.replace(/```json|```/g,'').trim();
+        log(`${sym} text: ${clean}`,'info');
+
+        // Try JSON parse
+        try{
+          const j=JSON.parse(clean);
+          if(j.price){
+            log(`✅ ${sym}: ฿${j.price}`,'ok');
+            return {price:j.price};
+          }
+        }catch{}
+
+        // Try regex
+        const m=clean.match(/"price"\s*:\s*([\d.]+)/);
+        if(m){
+          const p=parseFloat(m[1]);
+          log(`✅ ${sym}: ฿${p} (regex)`,'ok');
+          return {price:p};
+        }
+
+        // Try to find any number that looks like a price
+        const nums=clean.match(/\d+\.?\d*/g);
+        if(nums&&nums.length>0){
+          const p=parseFloat(nums[0]);
+          if(p>0){
+            log(`✅ ${sym}: ฿${p} (extracted number)`,'ok');
+            return {price:p};
+          }
+        }
+      }
+    }
+
+    // Check for blocked/safety issues
+    const finish=data?.candidates?.[0]?.finishReason;
+    if(finish&&finish!=='STOP'){
+      log(`⚠️ ${sym}: finishReason=${finish}`,'err');
+      return {error:`finishReason: ${finish}`};
+    }
+
+    log(`❌ ${sym}: ไม่พบราคาใน response`,'err');
+    return {error:'ไม่พบราคา'};
+  }catch(e){
+    log(`❌ ${sym}: ${e.message}`,'err');
+    return {error:e.message};
+  }
+}
+
+async function f1(i){
+  if(!apiKey){alert('กรุณาใส่ Gemini API Key ก่อน');tog('keyP');return;}
+  S[i].loading=true;S[i].error=null;render();
+  const result=await gemini(S[i].s);
+  S[i].loading=false;
+  if(result&&result.price){
+    S[i].p=result.price;S[i].error=null;
+  }else{
+    S[i].error=result?.error||'ดึงไม่ได้';
+  }
+  sv();render();upTime();
+}
+
+async function fetchAll(){
+  if(!apiKey){alert('กรุณาใส่ Gemini API Key ก่อน');tog('keyP');return;}
+  const b=document.getElementById('fetchBtn');
+  b.disabled=true;b.textContent='⏳ กำลังดึง...';
+  log('=== เริ่มดึงราคาทั้งหมด ===','info');
+
+  for(let i=0;i<S.length;i++){
+    S[i].loading=true;S[i].error=null;render();
+    const result=await gemini(S[i].s);
+    S[i].loading=false;
+    if(result&&result.price){
+      S[i].p=result.price;S[i].error=null;
+    }else{
+      S[i].error=result?.error||'ดึงไม่ได้';
+    }
+    render();
+    if(i<S.length-1)await new Promise(r=>setTimeout(r,1500));
+  }
+
+  sv();b.disabled=false;b.textContent='🔄 ดึงราคา';upTime();
+  log('=== เสร็จสิ้น ===','ok');
+}
+
+function saveKey(){
+  apiKey=document.getElementById('keyInp').value.trim();
+  localStorage.setItem('gk',apiKey);
+  log('บันทึก API Key แล้ว','ok');
+  document.getElementById('keyStatus').innerHTML='<span style="color:#16a34a;">✅ บันทึกแล้ว — กด 🧪 ทดสอบ เพื่อเช็ค</span>';
+}
+
+function sp(i,v){const p=parseFloat(v);if(!isNaN(p)&&p>0){S[i].p=p;sv();render();}}
+function rm(i){S.splice(i,1);sv();render();}
+function addStk(){
+  const sym=document.getElementById('aS').value.trim().toUpperCase();
+  if(!sym)return;
+  const d=[0,1,2,3].map(j=>parseFloat(document.getElementById('aD'+j).value)||0);
+  S.push({s:sym,d:d,p:null});
+  document.getElementById('aS').value='';
+  [0,1,2,3].forEach(j=>document.getElementById('aD'+j).value='');
+  tog('addP');sv();render();
+}
+
+function upTime(){
+  const n=new Date();
+  document.getElementById('lastUp').textContent=`อัปเดต: ${n.toLocaleString('th-TH')} • Gemini API`;
+  localStorage.setItem('lu',n.toISOString());
+}
+
+// === RENDER ===
 function render(){
   const tb=document.getElementById('tBody');
   tb.innerHTML='';
@@ -197,7 +410,7 @@ function render(){
     if(s.loading)prH='<span style="color:#94a3b8;font-size:11px;">⏳</span>';
     else if(s.p)prH=`<span class="mono" style="font-weight:600;font-size:14px;">${fm(s.p)}</span>`;
     else prH=`<input class="inp" placeholder="ราคา" style="width:65px;text-align:right;font-size:12px;font-family:'JetBrains Mono',monospace;padding:4px 6px;" onkeydown="if(event.key==='Enter')sp(${i},this.value)" onblur="sp(${i},this.value)">`;
-    if(s.error)prH+=`<div style="font-size:9px;color:#dc2626;">${s.error}</div>`;
+    if(s.error)prH+=`<div style="font-size:9px;color:#dc2626;max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="${s.error}">${s.error}</div>`;
 
     const signal=canBuy?'<span class="buy-signal">✅ ซื้อได้</span>':(y!=null&&y>=5?'<span style="font-size:10px;color:#ca8a04;">👀 จับตา</span>':'<span style="font-size:10px;color:#94a3b8;">—</span>');
 
@@ -224,6 +437,7 @@ function render(){
 
     card.innerHTML=`
       <div class="m-top"><div><span class="m-sym">${s.s}</span>${canBuy?'<span class="buy-signal" style="margin-left:6px;">✅ ซื้อได้</span>':''}${!canBuy&&y!=null&&y>=5?'<span style="margin-left:6px;font-size:10px;color:#ca8a04;">👀 จับตา</span>':''}</div><div>${mPrH}</div></div>
+      ${s.error?`<div style="font-size:10px;color:#dc2626;margin-bottom:4px;">⚠️ ${s.error}</div>`:''}
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div><span class="badge mono" style="background:${st.bg};color:${st.c};font-size:13px;padding:3px 10px;">Yield ${y!=null?fm(y)+'%':'-'}</span><span style="font-size:10px;color:${st.c};margin-left:4px;">${st.t!=='-'?st.t:''}</span></div>
         <div style="font-size:11px;color:#64748b;">เฉลี่ย <span class="mono" style="font-weight:600;">${fm(a)}</span></div>
@@ -240,74 +454,7 @@ function render(){
   });
 }
 
-function saveKey(){apiKey=document.getElementById('keyInp').value.trim();localStorage.setItem('gk',apiKey);tog('keyP');}
-function sp(i,v){const p=parseFloat(v);if(!isNaN(p)&&p>0){S[i].p=p;sv();render();}}
-function rm(i){S.splice(i,1);sv();render();}
-function addStk(){
-  const sym=document.getElementById('aS').value.trim().toUpperCase();
-  if(!sym)return;
-  const d=[0,1,2,3].map(j=>parseFloat(document.getElementById('aD'+j).value)||0);
-  S.push({s:sym,d:d,p:null});
-  document.getElementById('aS').value='';
-  [0,1,2,3].forEach(j=>document.getElementById('aD'+j).value='');
-  tog('addP');sv();render();
-}
-
-async function gemini(sym){
-  if(!apiKey)return null;
-  try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{parts:[{text:`What is the latest stock price of "${sym}" on Thailand Stock Exchange (SET) in Thai Baht? Reply ONLY with JSON: {"price":NUMBER} — nothing else.`}]}],
-        tools:[{google_search:{}}],
-        generationConfig:{temperature:0},
-      }),
-    });
-    const data=await r.json();
-    if(data.error){console.error('Gemini:',data.error.message);return null;}
-    const parts=data?.candidates?.[0]?.content?.parts||[];
-    const txt=parts.find(p=>p.text);
-    if(txt){
-      const c=txt.text.replace(/```json|```/g,'').trim();
-      const m=c.match(/\{\s*"price"\s*:\s*([\d.]+)\s*\}/);
-      if(m)return parseFloat(m[1]);
-      try{return JSON.parse(c).price;}catch{}
-    }
-    return null;
-  }catch(e){console.error(sym,e);return null;}
-}
-
-async function f1(i){
-  if(!apiKey){alert('กรุณาใส่ Gemini API Key ก่อน');tog('keyP');return;}
-  S[i].loading=true;S[i].error=null;render();
-  const p=await gemini(S[i].s);
-  S[i].loading=false;
-  if(p){S[i].p=p;S[i].error=null;}else{S[i].error='ดึงไม่ได้';}
-  sv();render();upTime();
-}
-
-async function fetchAll(){
-  if(!apiKey){alert('กรุณาใส่ Gemini API Key ก่อน');tog('keyP');return;}
-  const b=document.getElementById('fetchBtn');
-  b.disabled=true;b.textContent='⏳ กำลังดึง...';
-  for(let i=0;i<S.length;i++){
-    S[i].loading=true;S[i].error=null;render();
-    const p=await gemini(S[i].s);
-    S[i].loading=false;
-    if(p){S[i].p=p;S[i].error=null;}else{S[i].error='ดึงไม่ได้';}
-    render();
-    if(i<S.length-1)await new Promise(r=>setTimeout(r,1200));
-  }
-  sv();b.disabled=false;b.textContent='🔄 ดึงราคา';upTime();
-}
-
-function upTime(){
-  const n=new Date();
-  document.getElementById('lastUp').textContent=`อัปเดต: ${n.toLocaleString('th-TH')} • Gemini API`;
-  localStorage.setItem('lu',n.toISOString());
-}
-
+// Init
 const lu=localStorage.getItem('lu');
 if(lu)document.getElementById('lastUp').textContent=`อัปเดต: ${new Date(lu).toLocaleString('th-TH')} • Gemini API`;
 render();
