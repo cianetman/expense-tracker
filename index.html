@@ -2,462 +2,982 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>📊 Dividend Yield Calculator</title>
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="พอร์ตของฉัน">
+<meta name="theme-color" content="#0f172a">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230f172a'/%3E%3Ctext x='90' y='120' font-size='100' text-anchor='middle' fill='%2360a5fa'%3E📊%3C/text%3E%3C/svg%3E">
+<title>พอร์ตของฉัน</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Kanit',sans-serif;background:#f0f2f7;color:#1e293b;min-height:100vh;-webkit-tap-highlight-color:transparent;}
-.mono{font-family:'JetBrains Mono',monospace;}
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #334155;
+    --border: rgba(148, 163, 184, 0.15);
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --accent: #60a5fa;
+    --green: #4ade80;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --purple: #a78bfa;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Sukhumvit Set", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 480px; margin: 0 auto; padding: 16px 16px 80px; }
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .header h1 { font-size: 22px; font-weight: 600; margin: 0; }
+  .refresh-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .refresh-btn.spinning { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-.hdr{background:#fff;border-bottom:2px solid #e2e8f0;padding:12px 16px;position:sticky;top:0;z-index:50;}
-.hdr-in{max-width:900px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
-.hdr h1{font-size:16px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:6px;}
-.hdr .sub{font-size:10px;color:#94a3b8;margin-top:1px;}
-.hdr-btns{display:flex;gap:5px;flex-wrap:wrap;}
+  .total-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .total-label { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; }
+  .total-value-thb { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; }
+  .total-value-usd { font-size: 16px; color: var(--text-muted); margin-top: 2px; }
+  .total-pnl {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+  }
+  .pnl-positive { color: var(--green); }
+  .pnl-negative { color: var(--red); }
 
-.btn{border:none;padding:7px 12px;border-radius:7px;cursor:pointer;font-size:11px;font-family:'Kanit',sans-serif;font-weight:500;transition:all .15s;touch-action:manipulation;}
-.btn:active{transform:scale(0.96);}
-.btn:disabled{opacity:0.5;cursor:not-allowed;}
-.btn-l{background:#f1f5f9;color:#475569;}
-.btn-p{background:#2563eb;color:#fff;font-weight:600;}
-.btn-g{background:#16a34a;color:#fff;font-weight:600;}
-.btn-o{background:#f59e0b;color:#fff;font-weight:600;}
-.btn-sm{padding:4px 8px;font-size:12px;border-radius:5px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:28px;min-height:28px;}
-.btn-sm.dng{background:#fef2f2;border-color:#fecaca;color:#dc2626;}
+  .last-updated {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-bottom: 12px;
+  }
 
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
-.inp{background:#f8fafc;border:1px solid #e2e8f0;color:#1e293b;padding:7px 10px;border-radius:6px;font-size:13px;outline:none;font-family:'Kanit',sans-serif;width:100%;}
-.inp:focus{border-color:#93c5fd;}
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 1;
+    padding: 8px 10px;
+    text-align: center;
+    border-radius: 7px;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    min-width: fit-content;
+  }
+  .tab.active {
+    background: var(--surface-2);
+    color: var(--text);
+    font-weight: 500;
+  }
 
-/* Log panel */
-.log-panel{background:#1e293b;color:#94a3b8;border-radius:10px;padding:12px;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:11px;max-height:200px;overflow-y:auto;display:none;}
-.log-panel.show{display:block;}
-.log-ok{color:#4ade80;}
-.log-err{color:#f87171;}
-.log-info{color:#60a5fa;}
+  .section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin: 16px 0 10px;
+  }
+  .section-title { font-size: 15px; font-weight: 600; }
+  .add-btn {
+    background: var(--accent);
+    color: #0f172a;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
 
-.wrap{max-width:900px;margin:0 auto;padding:12px 8px;}
-.tbl-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow-x:auto;-webkit-overflow-scrolling:touch;}
-table{width:100%;border-collapse:collapse;font-size:12px;min-width:680px;}
-thead tr{background:#f8fafc;border-bottom:2px solid #e2e8f0;}
-th{padding:8px 8px;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;}
-td{padding:8px 8px;white-space:nowrap;}
-tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s;}
-.text-r{text-align:right;}
-.text-c{text-align:center;}
+  .asset-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .asset-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .asset-info { flex: 1; min-width: 0; }
+  .asset-symbol { font-weight: 600; font-size: 15px; }
+  .asset-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .asset-value { text-align: right; }
+  .asset-current { font-weight: 600; font-size: 15px; }
+  .asset-pnl { font-size: 12px; margin-top: 2px; }
 
-.buy-row{background:#f0fdf4 !important;border-left:3px solid #16a34a;}
-.buy-row:hover{background:#dcfce7 !important;}
+  .asset-actions {
+    display: flex; gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .icon-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    flex: 1;
+  }
+  .icon-btn:active { background: var(--surface-2); }
+  .icon-btn.danger { color: var(--red); }
 
-.badge{display:inline-block;padding:2px 8px;border-radius:16px;font-size:11px;font-weight:600;min-width:56px;text-align:center;}
-.badge-sub{font-size:9px;margin-top:1px;}
+  .empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 24px 16px;
+    font-size: 13px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px dashed var(--border);
+  }
 
-.buy-signal{display:inline-flex;align-items:center;gap:3px;background:#16a34a;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.7;}}
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 460px;
+    padding: 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+  }
+  .modal h2 { font-size: 18px; margin: 0 0 16px; font-weight: 600; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .form-row { display: flex; gap: 10px; }
+  .form-row .form-group { flex: 1; }
+  .modal-actions {
+    display: flex; gap: 10px;
+    margin-top: 18px;
+  }
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); color: #0f172a; }
+  .btn-secondary { background: var(--surface-2); color: var(--text); }
 
-.target-hit{background:#dcfce7;border-radius:4px;padding:2px 6px;font-weight:700;color:#16a34a;}
+  /* Chart */
+  .chart-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+  .chart-wrap { position: relative; height: 220px; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px 14px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
 
-.legend{display:flex;gap:12px;justify-content:center;margin-top:12px;font-size:10px;color:#94a3b8;flex-wrap:wrap;}
-.ldot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:3px;}
-.footer{text-align:center;margin-top:8px;font-size:10px;color:#b0b8c8;padding-bottom:16px;line-height:1.7;}
+  /* History */
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .history-action { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
 
-@media(max-width:700px){
-  .tbl-wrap{display:none;}
-  .mobile-cards{display:block!important;}
-}
-.mobile-cards{display:none;}
-.m-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
-.m-card.buy{border-left:4px solid #16a34a;background:#f0fdf4;}
-.m-card .m-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-.m-card .m-sym{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;color:#0f172a;}
-.m-card .m-price{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:18px;}
-.m-card .m-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;}
-.m-card .m-cell{background:#f8fafc;border-radius:6px;padding:6px;text-align:center;}
-.m-card .m-cell.hit{background:#dcfce7;}
-.m-card .m-cell .m-label{font-size:9px;color:#94a3b8;}
-.m-card .m-cell .m-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}
-.m-card .m-divs{font-size:10px;color:#94a3b8;margin-top:6px;}
-.m-card .m-acts{display:flex;gap:4px;margin-top:8px;justify-content:flex-end;}
+  .install-hint {
+    background: rgba(96, 165, 250, 0.1);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 16px;
+    display: none;
+  }
+  .install-hint.show { display: block; }
+
+  .currency-toggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+
+  .price-source {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
 </style>
 </head>
 <body>
+<div class="app">
+  <div class="header">
+    <h1>📊 พอร์ตของฉัน</h1>
+    <button class="refresh-btn" id="refreshBtn" onclick="updatePrices()" aria-label="รีเฟรช">↻</button>
+  </div>
 
-<div class="hdr">
-  <div class="hdr-in">
-    <div>
-      <h1>📊 Dividend Calculator</h1>
-      <div class="sub" id="lastUp">ยังไม่ได้ดึงราคา • Gemini API</div>
+  <div class="last-updated" id="lastUpdated">ยังไม่ได้อัพเดต</div>
+
+  <div class="total-card">
+    <div class="total-label">มูลค่ารวมทั้งหมด</div>
+    <div class="total-value-thb" id="totalTHB">฿0</div>
+    <div class="total-value-usd" id="totalUSD">$0</div>
+    <div class="total-pnl">
+      <span>กำไร/ขาดทุนรวม</span>
+      <span id="totalPnL">฿0 (0.00%)</span>
     </div>
-    <div class="hdr-btns">
-      <button class="btn btn-l" onclick="tog('keyP')">🔑</button>
-      <button class="btn btn-l" onclick="tog('addP')">＋ เพิ่ม</button>
-      <button class="btn btn-o" onclick="testKey()">🧪 ทดสอบ</button>
-      <button class="btn btn-p" id="fetchBtn" onclick="fetchAll()">🔄 ดึงราคา</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="all" onclick="switchTab('all')">ทั้งหมด</div>
+    <div class="tab" data-tab="th_stock" onclick="switchTab('th_stock')">หุ้นไทย</div>
+    <div class="tab" data-tab="us_stock" onclick="switchTab('us_stock')">หุ้นนอก</div>
+    <div class="tab" data-tab="crypto" onclick="switchTab('crypto')">คริปโต</div>
+    <div class="tab" data-tab="stable" onclick="switchTab('stable')">USDT</div>
+    <div class="tab" data-tab="chart" onclick="switchTab('chart')">📈</div>
+    <div class="tab" data-tab="history" onclick="switchTab('history')">📜</div>
+  </div>
+
+  <div id="content"></div>
+
+  <div class="install-hint" id="installHint">
+    💡 <b>เพิ่มลงหน้าจอหลัก iPhone:</b> กดปุ่ม Share (□↑) ใน Safari → เลือก "Add to Home Screen"
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">เพิ่มสินทรัพย์</h2>
+    <input type="hidden" id="editId">
+    <div class="form-group">
+      <label>ประเภท</label>
+      <select id="assetType">
+        <option value="th_stock">หุ้นไทย (SET)</option>
+        <option value="us_stock">หุ้นต่างประเทศ (US)</option>
+        <option value="crypto">คริปโตเคอเรนซี</option>
+        <option value="stable">USDT / Stablecoin</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>สัญลักษณ์ / ชื่อย่อ <span id="symbolHint" style="color:var(--text-dim);font-size:11px;"></span></label>
+      <input type="text" id="assetSymbol" placeholder="เช่น PTT, AAPL, BTC, USDT" autocapitalize="characters">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>จำนวน</label>
+        <input type="number" id="assetQty" step="any" inputmode="decimal" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>ราคาต้นทุน/หน่วย</label>
+        <input type="number" id="assetCost" step="any" inputmode="decimal" placeholder="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>หมายเหตุ (ถ้ามี)</label>
+      <input type="text" id="assetNote" placeholder="เช่น ซื้อตอนคริปโตซัมเมอร์">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveAsset()">บันทึก</button>
     </div>
   </div>
 </div>
 
-<div class="wrap">
-  <!-- API Key -->
-  <div class="card" id="keyP" style="display:none;">
-    <div style="font-size:12px;font-weight:600;margin-bottom:6px;">🔑 Gemini API Key</div>
-    <div style="display:flex;gap:6px;">
-      <input type="password" id="keyInp" class="inp" placeholder="AIzaSy..." style="font-family:'JetBrains Mono',monospace;font-size:12px;">
-      <button class="btn btn-p" onclick="saveKey()" style="white-space:nowrap;">บันทึก</button>
-    </div>
-    <div style="font-size:10px;color:#94a3b8;margin-top:4px;">
-      สร้าง Key ได้ที่ <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#2563eb;">aistudio.google.com/apikey</a>
-    </div>
-    <div id="keyStatus" style="margin-top:6px;font-size:11px;"></div>
-  </div>
-
-  <!-- Add Stock -->
-  <div class="card" id="addP" style="display:none;">
-    <div style="font-size:12px;font-weight:600;margin-bottom:6px;">เพิ่มหุ้นใหม่</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:5px;margin-bottom:6px;">
-      <div><div style="font-size:9px;color:#94a3b8;">ชื่อหุ้น</div><input id="aS" class="inp" placeholder="BDMS" style="font-family:'JetBrains Mono',monospace;font-size:12px;"></div>
-      <div><div style="font-size:9px;color:#94a3b8;">2025</div><input id="aD0" class="inp" placeholder="0.00" style="font-size:12px;"></div>
-      <div><div style="font-size:9px;color:#94a3b8;">2024</div><input id="aD1" class="inp" placeholder="0.00" style="font-size:12px;"></div>
-      <div><div style="font-size:9px;color:#94a3b8;">2023</div><input id="aD2" class="inp" placeholder="0.00" style="font-size:12px;"></div>
-      <div><div style="font-size:9px;color:#94a3b8;">2022</div><input id="aD3" class="inp" placeholder="0.00" style="font-size:12px;"></div>
-    </div>
-    <button class="btn btn-g" onclick="addStk()" style="width:100%;">✓ เพิ่ม</button>
-  </div>
-
-  <!-- Debug Log -->
-  <div class="log-panel" id="logP"></div>
-
-  <!-- Table -->
-  <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>หุ้น</th>
-          <th class="text-r">ราคา</th>
-          <th class="text-r">ปันผลเฉลี่ย</th>
-          <th class="text-c">Yield</th>
-          <th class="text-r">เป้า 5%</th>
-          <th class="text-r">เป้า 7%</th>
-          <th class="text-r">เป้า 10%</th>
-          <th class="text-c">สัญญาณ</th>
-          <th class="text-c" style="width:70px;"></th>
-        </tr>
-      </thead>
-      <tbody id="tBody"></tbody>
-    </table>
-  </div>
-
-  <!-- Mobile Cards -->
-  <div class="mobile-cards" id="mCards"></div>
-
-  <div class="legend">
-    <span><span class="ldot" style="background:#16a34a;"></span>≥7% ดีมาก</span>
-    <span><span class="ldot" style="background:#65a30d;"></span>≥5% ดี</span>
-    <span><span class="ldot" style="background:#ca8a04;"></span>≥3% พอใช้</span>
-    <span><span class="ldot" style="background:#dc2626;"></span>&lt;3% ต่ำ</span>
-  </div>
-  <div class="footer">
-    ✅ <b>ซื้อได้</b> = Yield ≥ 7% (ราคาต่ำกว่าเป้า 7%)<br>
-    ราคาเป้า = ปันผลเฉลี่ย ÷ % yield
-  </div>
-</div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-let apiKey=localStorage.getItem('gk')||'';
-let S=JSON.parse(localStorage.getItem('sd')||'null')||[
-  {s:"BDMS",d:[0.75,0.7,0.65,0.5],p:null},
-  {s:"BH",d:[5,5.15,3.7,3.2],p:null},
-  {s:"BKIH",d:[17,16.75,16.25,15.5],p:null},
-  {s:"TIPH",d:[2,1.6,1.25,1.8],p:null},
-  {s:"BAY",d:[0.85,0.85,0.85,0.85],p:null},
-  {s:"TTB",d:[0.126,0.12,0.103,0.058],p:null},
-  {s:"BBL",d:[8.5,7,5,3.5],p:null},
-];
-document.getElementById('keyInp').value=apiKey;
+// ============ STATE ============
+const STORAGE_KEY = 'my_portfolio_v1';
+const HISTORY_KEY = 'my_portfolio_history_v1';
+const PRICES_KEY = 'my_portfolio_prices_v1';
 
-function fm(n,d=2){if(n==null||isNaN(n))return'-';return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
-function av(a){return a.reduce((x,y)=>x+y,0)/a.length;}
-function yp(p,a){return(p&&a)?(a/p)*100:null;}
-function tp(a,y){return(a&&y)?a/y:null;}
-function ys(y){
-  if(y==null)return{c:'#999',bg:'#f3f4f6',t:'-'};
-  if(y>=7)return{c:'#16a34a',bg:'#dcfce7',t:'ดีมาก'};
-  if(y>=5)return{c:'#65a30d',bg:'#ecfccb',t:'ดี'};
-  if(y>=3)return{c:'#ca8a04',bg:'#fef9c3',t:'พอใช้'};
-  return{c:'#dc2626',bg:'#fee2e2',t:'ต่ำ'};
-}
-function sv(){localStorage.setItem('sd',JSON.stringify(S));}
-function tog(id){const e=document.getElementById(id);e.style.display=e.style.display==='none'?'block':'none';}
+let state = {
+  assets: [],
+  history: [],
+  prices: {},   // { symbol_type: { price, currency, updatedAt } }
+  fxRate: 36,   // USD -> THB
+  fxUpdatedAt: null,
+  lastUpdated: null,
+  currentTab: 'all'
+};
 
-// === LOG ===
-function log(msg, type='info'){
-  const p=document.getElementById('logP');
-  p.classList.add('show');
-  const cls=type==='ok'?'log-ok':type==='err'?'log-err':'log-info';
-  const time=new Date().toLocaleTimeString('th-TH');
-  p.innerHTML+=`<div class="${cls}">[${time}] ${msg}</div>`;
-  p.scrollTop=p.scrollHeight;
-}
+const TYPE_LABEL = {
+  th_stock: 'หุ้นไทย',
+  us_stock: 'หุ้นนอก',
+  crypto: 'คริปโต',
+  stable: 'Stablecoin'
+};
 
-// === TEST KEY ===
-async function testKey(){
-  if(!apiKey){alert('กรุณาใส่ API Key ก่อน');tog('keyP');return;}
-  const ks=document.getElementById('keyStatus');
-  ks.innerHTML='<span style="color:#f59e0b;">⏳ กำลังทดสอบ...</span>';
-  log('ทดสอบ API Key...','info');
+const TYPE_COLOR = {
+  th_stock: '#60a5fa',
+  us_stock: '#a78bfa',
+  crypto: '#fbbf24',
+  stable: '#4ade80'
+};
 
-  try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{parts:[{text:'Reply with exactly: {"status":"ok"}'}]}],
-        generationConfig:{temperature:0},
-      }),
-    });
-
-    const data=await r.json();
-    log('Response: '+JSON.stringify(data).substring(0,300),'info');
-
-    if(data.error){
-      ks.innerHTML=`<span style="color:#dc2626;">❌ Error: ${data.error.message}</span>`;
-      log('API Key Error: '+data.error.message,'err');
-      return;
+// ============ STORAGE ============
+function load() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      state.assets = parsed.assets || [];
+      state.fxRate = parsed.fxRate || 36;
+      state.fxUpdatedAt = parsed.fxUpdatedAt || null;
+      state.lastUpdated = parsed.lastUpdated || null;
     }
+    const hist = localStorage.getItem(HISTORY_KEY);
+    if (hist) state.history = JSON.parse(hist);
+    const prices = localStorage.getItem(PRICES_KEY);
+    if (prices) state.prices = JSON.parse(prices);
+  } catch(e) { console.error(e); }
+}
 
-    const parts=data?.candidates?.[0]?.content?.parts||[];
-    if(parts.length>0){
-      ks.innerHTML='<span style="color:#16a34a;">✅ API Key ใช้งานได้!</span>';
-      log('API Key ใช้งานได้!','ok');
-    } else {
-      ks.innerHTML='<span style="color:#f59e0b;">⚠️ ได้คำตอบแต่ไม่มีเนื้อหา</span>';
-      log('Response ไม่มี parts','err');
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    assets: state.assets,
+    fxRate: state.fxRate,
+    fxUpdatedAt: state.fxUpdatedAt,
+    lastUpdated: state.lastUpdated
+  }));
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(state.history.slice(-100)));
+  localStorage.setItem(PRICES_KEY, JSON.stringify(state.prices));
+}
+
+function addHistory(action, detail) {
+  state.history.push({
+    ts: Date.now(),
+    action,
+    detail
+  });
+  if (state.history.length > 100) state.history = state.history.slice(-100);
+}
+
+// ============ PRICE FETCHING ============
+async function fetchPrice(asset) {
+  const key = `${asset.type}_${asset.symbol.toUpperCase()}`;
+  try {
+    if (asset.type === 'crypto') {
+      // CoinGecko - free, no key needed
+      const id = mapCryptoId(asset.symbol);
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
+      const data = await res.json();
+      if (data[id] && data[id].usd) {
+        return { price: data[id].usd, currency: 'USD' };
+      }
+    } else if (asset.type === 'stable') {
+      // Stablecoin = $1
+      return { price: 1, currency: 'USD' };
+    } else if (asset.type === 'us_stock') {
+      // Yahoo Finance via proxy
+      const sym = asset.symbol.toUpperCase();
+      const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d`);
+      const data = await res.json();
+      const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (price) return { price, currency: 'USD' };
+    } else if (asset.type === 'th_stock') {
+      // Thai stocks via Yahoo with .BK suffix
+      const sym = asset.symbol.toUpperCase() + '.BK';
+      const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d`);
+      const data = await res.json();
+      const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (price) return { price, currency: 'THB' };
     }
-  }catch(e){
-    ks.innerHTML=`<span style="color:#dc2626;">❌ Network error: ${e.message}</span>`;
-    log('Network error: '+e.message,'err');
+  } catch(e) {
+    console.warn('Fetch failed for', asset.symbol, e);
+  }
+  return null;
+}
+
+function mapCryptoId(symbol) {
+  const map = {
+    BTC: 'bitcoin', ETH: 'ethereum', BNB: 'binancecoin', SOL: 'solana',
+    XRP: 'ripple', ADA: 'cardano', DOGE: 'dogecoin', AVAX: 'avalanche-2',
+    DOT: 'polkadot', MATIC: 'matic-network', LINK: 'chainlink', LTC: 'litecoin',
+    TRX: 'tron', UNI: 'uniswap', ATOM: 'cosmos', XLM: 'stellar',
+    NEAR: 'near', APT: 'aptos', ARB: 'arbitrum', OP: 'optimism',
+    SUI: 'sui', PEPE: 'pepe', SHIB: 'shiba-inu', WIF: 'dogwifcoin'
+  };
+  return map[symbol.toUpperCase()] || symbol.toLowerCase();
+}
+
+async function fetchFxRate() {
+  try {
+    const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    const data = await res.json();
+    if (data && data.rates && data.rates.THB) {
+      state.fxRate = data.rates.THB;
+      state.fxUpdatedAt = Date.now();
+    }
+  } catch(e) {
+    console.warn('FX rate fetch failed, using cached', e);
   }
 }
 
-// === GEMINI FETCH ===
-async function gemini(sym){
-  if(!apiKey)return null;
-  log(`ดึงราคา ${sym}...`,'info');
+async function updatePrices() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  document.getElementById('lastUpdated').textContent = 'กำลังอัพเดต...';
 
-  try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{parts:[{text:
-          `Search for the current stock price of "${sym}" on the Stock Exchange of Thailand (SET).
-Give me ONLY a JSON response in this exact format, nothing else:
-{"price": 123.50}
-Replace 123.50 with the actual current price in Thai Baht. Do not include any other text.`
-        }]}],
-        tools:[{google_search:{}}],
-        generationConfig:{temperature:0,maxOutputTokens:100},
-      }),
+  await fetchFxRate();
+
+  const promises = state.assets.map(async (asset) => {
+    const result = await fetchPrice(asset);
+    if (result) {
+      const key = `${asset.type}_${asset.symbol.toUpperCase()}`;
+      state.prices[key] = { ...result, updatedAt: Date.now() };
+    }
+  });
+
+  await Promise.all(promises);
+  state.lastUpdated = Date.now();
+  save();
+  render();
+  btn.classList.remove('spinning');
+}
+
+// ============ CALCULATIONS ============
+function getCurrentPriceTHB(asset) {
+  const key = `${asset.type}_${asset.symbol.toUpperCase()}`;
+  const p = state.prices[key];
+  if (!p) return null;
+  if (p.currency === 'THB') return p.price;
+  return p.price * state.fxRate;
+}
+
+function getCurrentValueTHB(asset) {
+  const price = getCurrentPriceTHB(asset);
+  if (price === null) return null;
+  return price * asset.qty;
+}
+
+function getCostTHB(asset) {
+  // ต้นทุนถูกบันทึกเป็นสกุลของสินทรัพย์นั้น เราถือว่าหุ้นไทย = THB, อื่นๆ = USD
+  // แต่ให้เก็บแบบยืดหยุ่น: ถ้าเป็น th_stock ใช้ THB ตรงๆ, อื่นๆ convert
+  if (asset.type === 'th_stock') return asset.cost * asset.qty;
+  return asset.cost * asset.qty * state.fxRate;
+}
+
+function getCostNative(asset) {
+  return asset.cost * asset.qty;
+}
+
+function formatTHB(n) {
+  if (n === null || n === undefined || isNaN(n)) return '฿—';
+  return '฿' + Math.round(n).toLocaleString('th-TH');
+}
+function formatUSD(n) {
+  if (n === null || n === undefined || isNaN(n)) return '$—';
+  return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+}
+
+function formatPnL(pnl, pct) {
+  if (pnl === null || isNaN(pnl)) return '<span style="color:var(--text-dim)">รอข้อมูล</span>';
+  const cls = pnl >= 0 ? 'pnl-positive' : 'pnl-negative';
+  const sign = pnl >= 0 ? '+' : '';
+  return `<span class="${cls}">${sign}${formatTHB(pnl)} (${sign}${pct.toFixed(2)}%)</span>`;
+}
+
+function formatTime(ts) {
+  if (!ts) return 'ยังไม่ได้อัพเดต';
+  const d = new Date(ts);
+  return d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+// ============ RENDER ============
+function render() {
+  // Totals
+  let totalValueTHB = 0;
+  let totalCostTHB = 0;
+  let hasAnyPrice = false;
+  state.assets.forEach(a => {
+    const val = getCurrentValueTHB(a);
+    const cost = getCostTHB(a);
+    if (val !== null) { totalValueTHB += val; hasAnyPrice = true; }
+    else totalValueTHB += cost; // fallback to cost if no price
+    totalCostTHB += cost;
+  });
+  const totalPnL = totalValueTHB - totalCostTHB;
+  const totalPnLPct = totalCostTHB > 0 ? (totalPnL / totalCostTHB * 100) : 0;
+
+  document.getElementById('totalTHB').textContent = formatTHB(totalValueTHB);
+  document.getElementById('totalUSD').textContent = formatUSD(totalValueTHB / state.fxRate);
+  document.getElementById('totalPnL').innerHTML = formatPnL(totalPnL, totalPnLPct);
+
+  document.getElementById('lastUpdated').textContent =
+    state.lastUpdated
+      ? `อัพเดตล่าสุด: ${formatTime(state.lastUpdated)} | FX: 1 USD = ${state.fxRate.toFixed(2)} THB`
+      : 'แตะปุ่ม ↻ เพื่ออัพเดตราคา';
+
+  // Content area
+  const content = document.getElementById('content');
+  const tab = state.currentTab;
+
+  if (tab === 'chart') {
+    renderChart(content);
+  } else if (tab === 'history') {
+    renderHistory(content);
+  } else {
+    renderAssetList(content, tab);
+  }
+
+  // Show install hint on iOS Safari (not standalone)
+  if (isIOSSafariNotStandalone()) {
+    document.getElementById('installHint').classList.add('show');
+  }
+}
+
+function renderAssetList(container, filter) {
+  const assets = filter === 'all' ? state.assets : state.assets.filter(a => a.type === filter);
+  let html = `
+    <div class="section-header">
+      <div class="section-title">
+        ${filter === 'all' ? 'สินทรัพย์ทั้งหมด' : TYPE_LABEL[filter]}
+        <span style="color:var(--text-muted);font-weight:400;font-size:13px;">(${assets.length})</span>
+      </div>
+      <button class="add-btn" onclick="openAddModal('${filter === 'all' ? '' : filter}')">+ เพิ่ม</button>
+    </div>
+  `;
+
+  if (assets.length === 0) {
+    html += `<div class="empty">ยังไม่มีรายการ แตะ "+ เพิ่ม" เพื่อเริ่มต้น</div>`;
+  } else {
+    // Sort by current value desc
+    const sorted = [...assets].sort((a, b) => {
+      const va = getCurrentValueTHB(a) ?? getCostTHB(a);
+      const vb = getCurrentValueTHB(b) ?? getCostTHB(b);
+      return vb - va;
     });
 
-    const data=await r.json();
+    sorted.forEach(asset => {
+      const curPrice = getCurrentPriceTHB(asset);
+      const curValue = getCurrentValueTHB(asset);
+      const costValue = getCostTHB(asset);
+      const pnl = curValue !== null ? curValue - costValue : null;
+      const pnlPct = costValue > 0 && pnl !== null ? (pnl / costValue * 100) : 0;
 
-    // Check for API errors
-    if(data.error){
-      log(`❌ ${sym}: API Error - ${data.error.message}`,'err');
-      return {error: data.error.message};
+      const priceKey = `${asset.type}_${asset.symbol.toUpperCase()}`;
+      const priceObj = state.prices[priceKey];
+      const nativePrice = priceObj ? priceObj.price : null;
+      const nativeCur = priceObj ? priceObj.currency : (asset.type === 'th_stock' ? 'THB' : 'USD');
+
+      html += `
+        <div class="asset-card">
+          <div class="asset-row">
+            <div class="asset-info">
+              <div class="asset-symbol">${escapeHtml(asset.symbol.toUpperCase())} <span style="color:var(--text-dim);font-size:11px;font-weight:400;">${TYPE_LABEL[asset.type]}</span></div>
+              <div class="asset-meta">
+                ${asset.qty} × ${formatNum(asset.cost)} ${nativeCur === 'THB' ? '฿' : '$'} (ต้นทุน)
+              </div>
+              ${nativePrice !== null ? `<div class="asset-meta">ราคาปัจจุบัน: ${formatNum(nativePrice)} ${nativeCur === 'THB' ? '฿' : '$'}</div>` : '<div class="asset-meta" style="color:var(--text-dim)">รอข้อมูลราคา</div>'}
+              ${asset.note ? `<div class="asset-meta" style="font-style:italic">${escapeHtml(asset.note)}</div>` : ''}
+            </div>
+            <div class="asset-value">
+              <div class="asset-current">${curValue !== null ? formatTHB(curValue) : formatTHB(costValue)}</div>
+              <div class="asset-pnl">${formatPnL(pnl, pnlPct)}</div>
+            </div>
+          </div>
+          <div class="asset-actions">
+            <button class="icon-btn" onclick="adjustQty('${asset.id}', 'add')">+ เพิ่มจำนวน</button>
+            <button class="icon-btn" onclick="adjustQty('${asset.id}', 'sub')">− ลดจำนวน</button>
+            <button class="icon-btn" onclick="openEditModal('${asset.id}')">✎ แก้</button>
+            <button class="icon-btn danger" onclick="deleteAsset('${asset.id}')">🗑</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+function formatNum(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  if (n >= 100) return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  if (n >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  return n.toLocaleString(undefined, { maximumFractionDigits: 8 });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+let chartInstance = null;
+function renderChart(container) {
+  // Aggregate by type
+  const byType = { th_stock: 0, us_stock: 0, crypto: 0, stable: 0 };
+  let total = 0;
+  state.assets.forEach(a => {
+    const v = getCurrentValueTHB(a) ?? getCostTHB(a);
+    byType[a.type] += v;
+    total += v;
+  });
+
+  let html = `
+    <div class="chart-container">
+      <div class="chart-title">สัดส่วนพอร์ตตามประเภท</div>
+      <div class="chart-wrap"><canvas id="pieChart" role="img" aria-label="กราฟวงกลมสัดส่วนสินทรัพย์"></canvas></div>
+      <div class="legend">
+  `;
+  Object.entries(byType).forEach(([t, v]) => {
+    if (v > 0) {
+      const pct = total > 0 ? (v / total * 100).toFixed(1) : 0;
+      html += `<span class="legend-item"><span class="legend-dot" style="background:${TYPE_COLOR[t]}"></span>${TYPE_LABEL[t]} ${pct}%</span>`;
     }
+  });
+  html += `</div></div>`;
 
-    // Log raw response
-    const raw=JSON.stringify(data).substring(0,500);
-    log(`${sym} raw: ${raw}`,'info');
+  // Individual breakdown
+  html += `<div class="chart-container">
+    <div class="chart-title">รายตัวบนสุด 10 อันดับ</div>
+    <div class="chart-wrap"><canvas id="barChart" role="img" aria-label="กราฟแท่งสินทรัพย์รายตัว"></canvas></div>
+  </div>`;
 
-    const parts=data?.candidates?.[0]?.content?.parts||[];
-    
-    // Try to find price in text parts
-    for(const part of parts){
-      if(part.text){
-        const clean=part.text.replace(/```json|```/g,'').trim();
-        log(`${sym} text: ${clean}`,'info');
+  container.innerHTML = html;
 
-        // Try JSON parse
-        try{
-          const j=JSON.parse(clean);
-          if(j.price){
-            log(`✅ ${sym}: ฿${j.price}`,'ok');
-            return {price:j.price};
-          }
-        }catch{}
+  // Render pie
+  const labels = [], data = [], colors = [];
+  Object.entries(byType).forEach(([t, v]) => {
+    if (v > 0) { labels.push(TYPE_LABEL[t]); data.push(Math.round(v)); colors.push(TYPE_COLOR[t]); }
+  });
 
-        // Try regex
-        const m=clean.match(/"price"\s*:\s*([\d.]+)/);
-        if(m){
-          const p=parseFloat(m[1]);
-          log(`✅ ${sym}: ฿${p} (regex)`,'ok');
-          return {price:p};
-        }
-
-        // Try to find any number that looks like a price
-        const nums=clean.match(/\d+\.?\d*/g);
-        if(nums&&nums.length>0){
-          const p=parseFloat(nums[0]);
-          if(p>0){
-            log(`✅ ${sym}: ฿${p} (extracted number)`,'ok');
-            return {price:p};
+  if (data.length > 0) {
+    new Chart(document.getElementById('pieChart'), {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.label}: ฿${ctx.parsed.toLocaleString()}`
+            }
           }
         }
       }
-    }
+    });
+  }
 
-    // Check for blocked/safety issues
-    const finish=data?.candidates?.[0]?.finishReason;
-    if(finish&&finish!=='STOP'){
-      log(`⚠️ ${sym}: finishReason=${finish}`,'err');
-      return {error:`finishReason: ${finish}`};
-    }
+  // Bar chart - top 10 individual
+  const individuals = state.assets.map(a => ({
+    label: a.symbol.toUpperCase(),
+    value: getCurrentValueTHB(a) ?? getCostTHB(a),
+    type: a.type
+  })).sort((a,b) => b.value - a.value).slice(0, 10);
 
-    log(`❌ ${sym}: ไม่พบราคาใน response`,'err');
-    return {error:'ไม่พบราคา'};
-  }catch(e){
-    log(`❌ ${sym}: ${e.message}`,'err');
-    return {error:e.message};
+  if (individuals.length > 0) {
+    new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: {
+        labels: individuals.map(i => i.label),
+        datasets: [{
+          data: individuals.map(i => Math.round(i.value)),
+          backgroundColor: individuals.map(i => TYPE_COLOR[i.type]),
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: { label: (ctx) => `฿${ctx.parsed.x.toLocaleString()}` }
+          }
+        },
+        scales: {
+          x: { ticks: { color: '#94a3b8', callback: v => '฿' + (v/1000).toFixed(0) + 'k' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+          y: { ticks: { color: '#f1f5f9' }, grid: { display: false } }
+        }
+      }
+    });
   }
 }
 
-async function f1(i){
-  if(!apiKey){alert('กรุณาใส่ Gemini API Key ก่อน');tog('keyP');return;}
-  S[i].loading=true;S[i].error=null;render();
-  const result=await gemini(S[i].s);
-  S[i].loading=false;
-  if(result&&result.price){
-    S[i].p=result.price;S[i].error=null;
-  }else{
-    S[i].error=result?.error||'ดึงไม่ได้';
+function renderHistory(container) {
+  let html = `<div class="section-header"><div class="section-title">ประวัติการเปลี่ยนแปลง</div>
+    <button class="add-btn" style="background:var(--surface-2);color:var(--text)" onclick="clearHistory()">ลบทั้งหมด</button>
+  </div>`;
+  if (state.history.length === 0) {
+    html += `<div class="empty">ยังไม่มีประวัติ</div>`;
+  } else {
+    const sorted = [...state.history].reverse();
+    sorted.forEach(h => {
+      html += `<div class="history-item">
+        <div>
+          <div>${escapeHtml(h.detail)}</div>
+          <div class="history-action">${h.action}</div>
+        </div>
+        <div style="color:var(--text-dim);font-size:11px;white-space:nowrap;margin-left:8px;">${formatTime(h.ts)}</div>
+      </div>`;
+    });
   }
-  sv();render();upTime();
+  container.innerHTML = html;
 }
 
-async function fetchAll(){
-  if(!apiKey){alert('กรุณาใส่ Gemini API Key ก่อน');tog('keyP');return;}
-  const b=document.getElementById('fetchBtn');
-  b.disabled=true;b.textContent='⏳ กำลังดึง...';
-  log('=== เริ่มดึงราคาทั้งหมด ===','info');
-
-  for(let i=0;i<S.length;i++){
-    S[i].loading=true;S[i].error=null;render();
-    const result=await gemini(S[i].s);
-    S[i].loading=false;
-    if(result&&result.price){
-      S[i].p=result.price;S[i].error=null;
-    }else{
-      S[i].error=result?.error||'ดึงไม่ได้';
-    }
-    render();
-    if(i<S.length-1)await new Promise(r=>setTimeout(r,1500));
-  }
-
-  sv();b.disabled=false;b.textContent='🔄 ดึงราคา';upTime();
-  log('=== เสร็จสิ้น ===','ok');
-}
-
-function saveKey(){
-  apiKey=document.getElementById('keyInp').value.trim();
-  localStorage.setItem('gk',apiKey);
-  log('บันทึก API Key แล้ว','ok');
-  document.getElementById('keyStatus').innerHTML='<span style="color:#16a34a;">✅ บันทึกแล้ว — กด 🧪 ทดสอบ เพื่อเช็ค</span>';
-}
-
-function sp(i,v){const p=parseFloat(v);if(!isNaN(p)&&p>0){S[i].p=p;sv();render();}}
-function rm(i){S.splice(i,1);sv();render();}
-function addStk(){
-  const sym=document.getElementById('aS').value.trim().toUpperCase();
-  if(!sym)return;
-  const d=[0,1,2,3].map(j=>parseFloat(document.getElementById('aD'+j).value)||0);
-  S.push({s:sym,d:d,p:null});
-  document.getElementById('aS').value='';
-  [0,1,2,3].forEach(j=>document.getElementById('aD'+j).value='');
-  tog('addP');sv();render();
-}
-
-function upTime(){
-  const n=new Date();
-  document.getElementById('lastUp').textContent=`อัปเดต: ${n.toLocaleString('th-TH')} • Gemini API`;
-  localStorage.setItem('lu',n.toISOString());
-}
-
-// === RENDER ===
-function render(){
-  const tb=document.getElementById('tBody');
-  tb.innerHTML='';
-  const mc=document.getElementById('mCards');
-  mc.innerHTML='';
-
-  S.forEach((s,i)=>{
-    const a=av(s.d);
-    const y=yp(s.p,a);
-    const st=ys(y);
-    const t5=tp(a,0.05),t7=tp(a,0.07),t10=tp(a,0.10);
-    const canBuy=y!=null&&y>=7;
-    const hit5=s.p&&t5&&s.p<=t5;
-    const hit7=s.p&&t7&&s.p<=t7;
-    const hit10=s.p&&t10&&s.p<=t10;
-
-    // Desktop row
-    const tr=document.createElement('tr');
-    if(canBuy)tr.className='buy-row';
-
-    let prH;
-    if(s.loading)prH='<span style="color:#94a3b8;font-size:11px;">⏳</span>';
-    else if(s.p)prH=`<span class="mono" style="font-weight:600;font-size:14px;">${fm(s.p)}</span>`;
-    else prH=`<input class="inp" placeholder="ราคา" style="width:65px;text-align:right;font-size:12px;font-family:'JetBrains Mono',monospace;padding:4px 6px;" onkeydown="if(event.key==='Enter')sp(${i},this.value)" onblur="sp(${i},this.value)">`;
-    if(s.error)prH+=`<div style="font-size:9px;color:#dc2626;max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="${s.error}">${s.error}</div>`;
-
-    const signal=canBuy?'<span class="buy-signal">✅ ซื้อได้</span>':(y!=null&&y>=5?'<span style="font-size:10px;color:#ca8a04;">👀 จับตา</span>':'<span style="font-size:10px;color:#94a3b8;">—</span>');
-
-    tr.innerHTML=`
-      <td><div class="mono" style="font-weight:700;font-size:13px;color:#0f172a;">${s.s}</div><div style="font-size:9px;color:#94a3b8;margin-top:1px;">${s.d.map(x=>fm(x)).join(' | ')}</div></td>
-      <td class="text-r">${prH}</td>
-      <td class="text-r mono" style="font-weight:500;font-size:13px;">${fm(a)}</td>
-      <td class="text-c"><span class="badge mono" style="background:${st.bg};color:${st.c};">${y!=null?fm(y)+'%':'-'}</span><div class="badge-sub" style="color:${st.c};">${st.t!=='-'?st.t:''}</div></td>
-      <td class="text-r mono" style="font-size:12px;">${hit5?`<span class="target-hit">${fm(t5)} ✓</span>`:`<span style="color:#64748b;">${fm(t5)}</span>`}</td>
-      <td class="text-r mono" style="font-size:12px;">${hit7?`<span class="target-hit">${fm(t7)} ✓</span>`:`<span style="color:#64748b;">${fm(t7)}</span>`}</td>
-      <td class="text-r mono" style="font-size:12px;">${hit10?`<span class="target-hit">${fm(t10)} ✓</span>`:`<span style="color:#64748b;">${fm(t10)}</span>`}</td>
-      <td class="text-c">${signal}</td>
-      <td class="text-c"><button class="btn-sm" onclick="f1(${i})" ${s.loading?'disabled':''}>🔄</button> <button class="btn-sm dng" onclick="rm(${i})">✕</button></td>
-    `;
-    tb.appendChild(tr);
-
-    // Mobile card
-    const card=document.createElement('div');
-    card.className='m-card'+(canBuy?' buy':'');
-    let mPrH;
-    if(s.loading)mPrH='<span style="color:#94a3b8;">⏳</span>';
-    else if(s.p)mPrH=`<span class="m-price">฿${fm(s.p)}</span>`;
-    else mPrH=`<input class="inp" placeholder="ราคา" style="width:80px;text-align:right;font-size:14px;font-family:'JetBrains Mono',monospace;padding:5px 8px;" onkeydown="if(event.key==='Enter')sp(${i},this.value)" onblur="sp(${i},this.value)">`;
-
-    card.innerHTML=`
-      <div class="m-top"><div><span class="m-sym">${s.s}</span>${canBuy?'<span class="buy-signal" style="margin-left:6px;">✅ ซื้อได้</span>':''}${!canBuy&&y!=null&&y>=5?'<span style="margin-left:6px;font-size:10px;color:#ca8a04;">👀 จับตา</span>':''}</div><div>${mPrH}</div></div>
-      ${s.error?`<div style="font-size:10px;color:#dc2626;margin-bottom:4px;">⚠️ ${s.error}</div>`:''}
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div><span class="badge mono" style="background:${st.bg};color:${st.c};font-size:13px;padding:3px 10px;">Yield ${y!=null?fm(y)+'%':'-'}</span><span style="font-size:10px;color:${st.c};margin-left:4px;">${st.t!=='-'?st.t:''}</span></div>
-        <div style="font-size:11px;color:#64748b;">เฉลี่ย <span class="mono" style="font-weight:600;">${fm(a)}</span></div>
-      </div>
-      <div class="m-grid">
-        <div class="m-cell${hit5?' hit':''}"><div class="m-label">เป้า 5%</div><div class="m-val" style="color:${hit5?'#16a34a':'#475569'};">${fm(t5)}${hit5?' ✓':''}</div></div>
-        <div class="m-cell${hit7?' hit':''}"><div class="m-label">เป้า 7%</div><div class="m-val" style="color:${hit7?'#16a34a':'#475569'};">${fm(t7)}${hit7?' ✓':''}</div></div>
-        <div class="m-cell${hit10?' hit':''}"><div class="m-label">เป้า 10%</div><div class="m-val" style="color:${hit10?'#16a34a':'#475569'};">${fm(t10)}${hit10?' ✓':''}</div></div>
-      </div>
-      <div class="m-divs">ปันผล: ${s.d.map((x,j)=>`'${25-j} ${fm(x)}`).join(' | ')}</div>
-      <div class="m-acts"><button class="btn-sm" onclick="f1(${i})" ${s.loading?'disabled':''}>🔄</button> <button class="btn-sm dng" onclick="rm(${i})">✕</button></div>
-    `;
-    mc.appendChild(card);
+// ============ TABS ============
+function switchTab(name) {
+  state.currentTab = name;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === name);
   });
+  render();
 }
 
-// Init
-const lu=localStorage.getItem('lu');
-if(lu)document.getElementById('lastUp').textContent=`อัปเดต: ${new Date(lu).toLocaleString('th-TH')} • Gemini API`;
+// ============ MODAL & CRUD ============
+function openAddModal(presetType) {
+  document.getElementById('modalTitle').textContent = 'เพิ่มสินทรัพย์';
+  document.getElementById('editId').value = '';
+  document.getElementById('assetType').value = presetType || 'th_stock';
+  document.getElementById('assetSymbol').value = '';
+  document.getElementById('assetQty').value = '';
+  document.getElementById('assetCost').value = '';
+  document.getElementById('assetNote').value = '';
+  updateSymbolHint();
+  document.getElementById('modal').classList.add('show');
+}
+
+function openEditModal(id) {
+  const asset = state.assets.find(a => a.id === id);
+  if (!asset) return;
+  document.getElementById('modalTitle').textContent = 'แก้ไขสินทรัพย์';
+  document.getElementById('editId').value = id;
+  document.getElementById('assetType').value = asset.type;
+  document.getElementById('assetSymbol').value = asset.symbol;
+  document.getElementById('assetQty').value = asset.qty;
+  document.getElementById('assetCost').value = asset.cost;
+  document.getElementById('assetNote').value = asset.note || '';
+  updateSymbolHint();
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+function updateSymbolHint() {
+  const type = document.getElementById('assetType').value;
+  const hints = {
+    th_stock: '(เช่น PTT, CPALL, KBANK)',
+    us_stock: '(เช่น AAPL, TSLA, NVDA)',
+    crypto: '(เช่น BTC, ETH, SOL)',
+    stable: '(เช่น USDT, USDC)'
+  };
+  document.getElementById('symbolHint').textContent = hints[type] || '';
+}
+
+document.getElementById('assetType').addEventListener('change', updateSymbolHint);
+
+function saveAsset() {
+  const id = document.getElementById('editId').value;
+  const type = document.getElementById('assetType').value;
+  const symbol = document.getElementById('assetSymbol').value.trim().toUpperCase();
+  const qty = parseFloat(document.getElementById('assetQty').value);
+  const cost = parseFloat(document.getElementById('assetCost').value);
+  const note = document.getElementById('assetNote').value.trim();
+
+  if (!symbol || !qty || qty <= 0 || isNaN(cost) || cost < 0) {
+    alert('กรุณากรอกข้อมูลให้ครบ');
+    return;
+  }
+
+  if (id) {
+    const idx = state.assets.findIndex(a => a.id === id);
+    if (idx >= 0) {
+      const old = state.assets[idx];
+      state.assets[idx] = { ...old, type, symbol, qty, cost, note };
+      addHistory('แก้ไข', `${symbol}: จำนวน ${old.qty}→${qty}, ต้นทุน ${old.cost}→${cost}`);
+    }
+  } else {
+    const newAsset = {
+      id: 'a_' + Date.now() + Math.random().toString(36).slice(2,6),
+      type, symbol, qty, cost, note,
+      createdAt: Date.now()
+    };
+    state.assets.push(newAsset);
+    addHistory('เพิ่ม', `${symbol} (${TYPE_LABEL[type]}): ${qty} หน่วย @ ${cost}`);
+  }
+  save();
+  closeModal();
+  render();
+  // Auto fetch price for new asset
+  updatePrices();
+}
+
+function deleteAsset(id) {
+  const asset = state.assets.find(a => a.id === id);
+  if (!asset) return;
+  if (!confirm(`ลบ ${asset.symbol} จริงหรือไม่?`)) return;
+  state.assets = state.assets.filter(a => a.id !== id);
+  addHistory('ลบ', `${asset.symbol} (${TYPE_LABEL[asset.type]})`);
+  save();
+  render();
+}
+
+function adjustQty(id, mode) {
+  const asset = state.assets.find(a => a.id === id);
+  if (!asset) return;
+  const promptText = mode === 'add' ? `เพิ่มกี่หน่วย ${asset.symbol}?` : `ลดกี่หน่วย ${asset.symbol}?`;
+  const amt = parseFloat(prompt(promptText, ''));
+  if (!amt || isNaN(amt) || amt <= 0) return;
+
+  if (mode === 'add') {
+    const priceText = prompt(`ราคาต้นทุนต่อหน่วยสำหรับ ${amt} หน่วยใหม่ (เพื่อคำนวณ avg cost)?`, asset.cost);
+    const newCost = parseFloat(priceText);
+    if (isNaN(newCost) || newCost < 0) return;
+    const totalCost = asset.qty * asset.cost + amt * newCost;
+    const newQty = asset.qty + amt;
+    const avgCost = totalCost / newQty;
+    addHistory('เพิ่มจำนวน', `${asset.symbol}: ${asset.qty}→${newQty} (+${amt} @ ${newCost}), avg ต้นทุน ${asset.cost.toFixed(2)}→${avgCost.toFixed(2)}`);
+    asset.qty = newQty;
+    asset.cost = avgCost;
+  } else {
+    if (amt > asset.qty) { alert('จำนวนที่ลดมากกว่าที่มี'); return; }
+    addHistory('ลดจำนวน', `${asset.symbol}: ${asset.qty}→${asset.qty - amt} (−${amt})`);
+    asset.qty -= amt;
+    if (asset.qty === 0) {
+      if (confirm(`จำนวนเหลือ 0 ลบรายการนี้?`)) {
+        state.assets = state.assets.filter(a => a.id !== asset.id);
+      }
+    }
+  }
+  save();
+  render();
+}
+
+function clearHistory() {
+  if (!confirm('ลบประวัติทั้งหมด?')) return;
+  state.history = [];
+  save();
+  render();
+}
+
+// ============ INSTALL DETECT ============
+function isIOSSafariNotStandalone() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const standalone = window.navigator.standalone === true;
+  return isIOS && !standalone;
+}
+
+// ============ INIT ============
+load();
 render();
+
+// Auto-update on visibility change (เปิดมาดูเมื่อไหร่ก็อัพเดต)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && state.assets.length > 0) {
+    const stale = !state.lastUpdated || (Date.now() - state.lastUpdated > 60000); // 1 min
+    if (stale) updatePrices();
+  }
+});
+
+// First load: auto-update if has assets
+if (state.assets.length > 0) {
+  setTimeout(updatePrices, 300);
+}
+
+// Backdrop click
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target.id === 'modal') closeModal();
+});
 </script>
 </body>
 </html>
